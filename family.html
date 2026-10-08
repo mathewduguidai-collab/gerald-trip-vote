@@ -33,6 +33,20 @@ textarea{min-height:150px;resize:vertical}#identity button{margin-top:14px}
 #done h2{color:#006a58}#done .card{border-color:#b8dccd}
 #footer{font-size:.82rem;color:#64717d;margin-top:35px}
 [hidden]{display:none!important}@media(min-width:680px){.hero{margin-top:16px;border-radius:24px;padding:45px 36px}.ideas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ideas .card{margin:0}.day{padding:20px}.section{margin:34px 0}}
+
+select{border:1px solid #aabdc4;border-radius:11px;font:inherit;padding:14px;width:100%;background:#fff;color:#203849;min-height:54px}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.interest-entry{border:1px solid #d5e1e3;border-radius:12px;margin:10px 0;padding:12px}
+.interest-entry:has(input:checked){border-color:#087c78;background:#f1faf7}
+.interest-entry label{display:flex;gap:12px;align-items:flex-start;margin:0;cursor:pointer}
+.interest-entry label input{accent-color:#0b777a;width:22px;height:22px;flex:0 0 22px;margin:1px 0}
+.interest-entry strong{display:block;font-size:1rem}
+.interest-entry .detail{display:block;font-size:.89rem;color:#526a75;font-weight:400;line-height:1.45;margin:5px 0}
+.interest-entry .star{min-height:40px;font-size:.88rem;background:#fff;color:#26536a;border:1px solid #b8c8cf;padding:7px 12px;margin:9px 0 0 34px}
+.interest-entry .star[aria-pressed="true"]{background:#fff3d5;color:#7e4a00;border-color:#e0bd64}
+#favoriteCount{background:#f0f7f5;padding:9px 12px;border-radius:9px;position:sticky;top:0;z-index:2}
+#savedSummary{margin:18px 0;line-height:1.6}
 </style></head>
 <body><main>
 <header class="hero"><div class="eyebrow">Family Vacation Survey</div>
@@ -46,22 +60,67 @@ textarea{min-height:150px;resize:vertical}#identity button{margin-top:14px}
 <h2>The plan so far</h2><div id="days"></div>
 <h2 style="margin-top:34px">Fun ideas for the week</h2><p class="subtle">These are ideas, not a packed schedule. Tell us what sounds best!</p><div class="ideas" id="ideas"></div>
 </section>
+
 <section id="survey" hidden>
-<h2>Pick your favorites</h2><p class="subtle">Five quick questions. It’s okay if you can only join part of the week.</p>
-<div class="card" id="identity">
-<label for="nameInput">First, what should we call you?</label>
-<input id="nameInput" type="text" autocomplete="given-name" placeholder="Your name (e.g. Mom, Kari, Sarah)" maxlength="50" />
-<p class="small subtle" style="margin:10px 0">Use a name no one else will choose. Use the same name to edit your answers later. No login or email needed.</p>
-<button class="primary" id="startBtn" type="button">Start my survey</button>
-</div>
-<div id="answers" hidden><p id="who" class="small subtle"></p><div id="polls"></div>
-<button class="primary" id="submitBtn" type="button">Submit my answers</button></div>
-<div id="done" hidden><div class="card"><h2>You're all set! ✓</h2><p>Your answers are saved. Matt will use everyone's favorites to put together the trip plan.</p>
-<button class="second" id="editBtn" type="button">Review or change my answers</button></div>
-<div class="card"><h3>Anything else we should know?</h3><p class="small subtle">Tell us when you're arriving and leaving, which nights you're staying, meal preferences or anything you want to do.</p>
-<textarea id="note" maxlength="2000" placeholder="Arriving:&#10;Leaving:&#10;Cabin nights:&#10;Food preferences:&#10;Other requests or ideas:"></textarea>
-<button class="primary" id="saveNote" type="button">Save my note</button><p id="noteStatus" class="status small" role="status"></p>
-</div></div></div><div id="surveyStatus" class="status" role="status"></div>
+ <h2>Your plans and favorites</h2>
+ <p class="subtle">Three quick parts. We’ll put the schedule together after everyone answers.</p>
+ <div class="card" id="identity">
+  <label for="nameInput">First, what should we call you?</label>
+  <input id="nameInput" type="text" autocomplete="given-name" placeholder="Your name (e.g. Mom, Kari, Sarah)" maxlength="50"/>
+  <p class="small subtle" style="margin:10px 0">Use the same name if you come back to update your answers. No email or login needed.</p>
+  <button class="primary" id="startBtn" type="button">Start my survey</button>
+ </div>
+ <div id="answers" hidden>
+  <p id="who" class="small subtle"></p>
+  <div class="card question" id="q-attendance">
+   <h3>1. When will you be there?</h3>
+   <p class="small subtle">Come for the whole week or just part of it. The Airbnb is booked October 17–24.</p>
+   <fieldset id="comingChoices" class="choices">
+    <legend class="sr-only">Are you coming?</legend>
+    <label class="choice"><input type="radio" name="coming" value="yes"><span><strong>I'm coming!</strong></span></label>
+    <label class="choice"><input type="radio" name="coming" value="unsure"><span><strong>Not sure yet</strong></span></label>
+    <label class="choice"><input type="radio" name="coming" value="no"><span><strong>I can't make it</strong></span></label>
+   </fieldset>
+   <div id="dateFields" hidden>
+    <label for="arrival">What day will you arrive?</label><select id="arrival"><option value="">Choose a day / not sure yet</option></select>
+    <label for="departure" style="margin-top:16px">What day will you leave?</label><select id="departure"><option value="">Choose a day / not sure yet</option></select>
+    <p class="small subtle" style="margin-top:10px">Cabin check-in is Saturday afternoon; checkout is Saturday morning, October 24. Pick tentative days if your plans aren't final.</p>
+   </div>
+  </div>
+  <div id="extraQuestions">
+   <div class="card question" id="q-holiday">
+    <h3>2. Are you going to Holiday World on Sunday, October 18?</h3>
+    <p class="small subtle">This is our Sunday main event. Select what you expect to do.</p>
+    <fieldset class="choices" id="holidayChoices">
+     <legend class="sr-only">Holiday World attendance</legend>
+     <label class="choice"><input type="radio" name="holiday" value="yes"><span><strong>Yes, count me in!</strong></span></label>
+     <label class="choice"><input type="radio" name="holiday" value="no"><span><strong>No, I'll skip it</strong></span></label>
+     <label class="choice"><input type="radio" name="holiday" value="maybe"><span><strong>Maybe / not sure</strong></span></label>
+    </fieldset>
+   </div>
+   <div class="card question" id="q-interests">
+    <h3>3. Which activities sound fun?</h3>
+    <p class="small subtle">Check anything you'd enjoy. Then star up to <strong>three favorites</strong> so we know what's most important to you. You can check more than three interests.</p>
+    <p class="small subtle" id="favoriteCount">0 of 3 favorites starred</p>
+    <div id="interests"></div>
+    <p class="small subtle" style="margin-top:14px">Feel free to skip activities you're not interested in. We'll arrange the actual days after everyone's responses.</p>
+   </div>
+  </div>
+  <div class="card" id="q-note">
+   <label for="note">Anything else we should know? <span class="small subtle">(optional)</span></label>
+   <textarea id="note" maxlength="2000" placeholder="Arrival or departure times, food preferences, mobility considerations, activities not listed, or other requests..."></textarea>
+  </div>
+  <button class="primary" id="submitBtn" type="button">Save my answers</button>
+ </div>
+ <div id="done" hidden>
+  <div class="card">
+   <h2>You're all set! ✓</h2>
+   <p>Your plans and favorites are saved. We’ll use everyone’s responses to build our family itinerary.</p>
+   <div id="savedSummary" class="small subtle"></div>
+   <button class="second" id="editBtn" type="button">Review or change my answers</button>
+  </div>
+ </div>
+ <div id="surveyStatus" class="status" role="status" aria-live="polite"></div>
 </section>
 <footer id="footer">This link is for our family group. The link is shared, so names aren't independently verified. Voting doesn't purchase tickets or reserve activities.</footer>
 </main>
@@ -105,79 +164,161 @@ function buildLanding(landing){
  }
  els("info").hidden=false;els("survey").hidden=false;
 }
-function renderPolls(){
- const container=els("polls");container.replaceChildren();
- ballots.forEach((b,i)=>{
-  const article=textNode("article","","card question");article.id="q"+b.poll_id;
-  article.append(textNode("h3",(i+1)+". "+b.title));
-  b.options.forEach(o=>{
-   const label=textNode("label","","choice"),radio=document.createElement("input");
-   radio.type="radio";radio.name="vote"+b.poll_id;radio.value=o.id;radio.checked=selected.get(b.poll_id)===o.id;
-   radio.addEventListener("change",()=>selected.set(b.poll_id,o.id));
-   const content=textNode("span");content.append(textNode("strong",o.title));
-   if(o.description)content.append(textNode("span",o.description,"detail"));
-   label.append(radio,content);article.append(label);
-   const link=urlLink(o.official_url,"Official details ↗");
-   if(link){const line=textNode("p","","links");line.append(link);article.append(line)}
-  });
-  container.append(article);
- });
+
+let name="",activities=[],current=null,interestSet=new Set(),favoriteSet=new Set(),saving=false;
+const dateLabels=["Sat, Oct 17","Sun, Oct 18","Mon, Oct 19","Tue, Oct 20","Wed, Oct 21","Thu, Oct 22","Fri, Oct 23","Sat, Oct 24"];
+function populateDates(){
+ for(let i=0;i<dateLabels.length;i++){
+  const day="2026-10-"+String(i+17).padStart(2,"0");
+  const dep=new Option(dateLabels[i],day);els("departure").add(dep);
+  if(i<7)els("arrival").add(new Option(dateLabels[i],day));
+ }
+}
+function selectedRadio(group){return document.querySelector('input[name="'+group+'"]:checked')?.value||""}
+function setRadio(group,value){
+ const input=document.querySelector('input[name="'+group+'"][value="'+value+'"]');if(input)input.checked=true;
+}
+function reflectAttendance(){
+ const coming=selectedRadio("coming");
+ els("dateFields").hidden=(coming==="no"||!coming);
+ els("extraQuestions").hidden=(coming==="no");
+}
+function updateFavCounter(){
+ els("favoriteCount").textContent=favoriteSet.size+" of 3 favorites starred";
+}
+function toggleInterest(code,on){
+ if(on)interestSet.add(code);else{interestSet.delete(code);favoriteSet.delete(code)}
+ drawInterests();
+}
+function toggleFavorite(code){
+ if(favoriteSet.has(code))favoriteSet.delete(code);
+ else {
+  if(favoriteSet.size>=3){status("You've already chosen three favorites. Unstar one to pick another.",true);return}
+  interestSet.add(code);favoriteSet.add(code);
+ }
+ drawInterests();
+}
+function drawInterests(){
+ const root=els("interests");root.replaceChildren();
+ for(const a of activities){
+  const entry=textNode("div","","interest-entry");
+  const label=textNode("label");
+  const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=interestSet.has(a.code);
+  checkbox.setAttribute("aria-label","Interested in "+a.title);
+  checkbox.addEventListener("change",()=>toggleInterest(a.code,checkbox.checked));
+  const content=textNode("span");content.append(textNode("strong",a.title),textNode("span",a.description,"detail"));
+  label.append(checkbox,content);entry.append(label);
+  if(interestSet.has(a.code)){
+   const star=textNode("button",favoriteSet.has(a.code)?"★ One of my top picks":"☆ Star as a top pick","star");
+   star.type="button";star.setAttribute("aria-pressed",favoriteSet.has(a.code)?"true":"false");
+   star.addEventListener("click",()=>toggleFavorite(a.code));
+   entry.append(star);
+  }
+  root.append(entry);
+ }
+ updateFavCounter();
+}
+function hydrate(result){
+ current=result||null;
+ for(const group of ["coming","holiday"]){
+  document.querySelectorAll('input[name="'+group+'"]').forEach(x=>x.checked=false);
+ }
+ els("arrival").value="";els("departure").value="";
+ interestSet=new Set();favoriteSet=new Set();els("note").value="";
+ if(result){
+  setRadio("coming",result.coming);
+  setRadio("holiday",result.holiday_world);
+  els("arrival").value=result.arrival_on||"";
+  els("departure").value=result.departure_on||"";
+  interestSet=new Set(Array.isArray(result.interested)?result.interested:[]);
+  favoriteSet=new Set(Array.isArray(result.favorites)?result.favorites:[]);
+  els("note").value=result.note||"";
+ }
+ reflectAttendance();drawInterests();
+}
+function drawSummary(){
+ const root=els("savedSummary");root.replaceChildren();
+ const line=s=>root.append(textNode("p",s,"small"));
+ if(!current)return;
+ if(current.coming==="no"){line("Trip: Can't make it");return}
+ if(current.coming==="unsure")line("Trip: Not sure yet");
+ else line("Trip: Coming!");
+ if(current.arrival_on||current.departure_on){
+  const nice=s=>s?dateLabels[Number(s.slice(-2))-17]||s:"TBD";
+  line("Arriving: "+nice(current.arrival_on)+" · Leaving: "+nice(current.departure_on));
+ }
+ line("Holiday World: "+({yes:"Yes",no:"No",maybe:"Maybe"}[current.holiday_world]||"Not sure"));
+ if((current.interested||[]).length)line("Activities you're interested in: "+current.interested.map(x=>activities.find(a=>a.code===x)?.title||x).join(", "));
+ if((current.favorites||[]).length)line("Your favorites: "+current.favorites.map(x=>activities.find(a=>a.code===x)?.title||x).join(", "));
+ if(current.note)line("Additional note saved.");
 }
 function showDone(){
- els("answers").hidden=true;els("done").hidden=false;els("note").value=noteSaved;els("noteStatus").textContent="";
- status("All "+ballots.length+" answers are saved.");
+ els("answers").hidden=true;els("done").hidden=false;drawSummary();
+ status("Your trip preferences are saved.");
  els("done").scrollIntoView({behavior:"smooth",block:"start"});
 }
 els("topTake").addEventListener("click",()=>els("survey").scrollIntoView({behavior:"smooth",block:"start"}));
+document.querySelectorAll('input[name="coming"]').forEach(x=>x.addEventListener("change",reflectAttendance));
 els("startBtn").addEventListener("click",async()=>{
  name=els("nameInput").value.trim().replace(/\s+/g," ");
  if(name.length<2||name.length>50){status("Please enter a name of 2–50 characters.",true);return}
- els("startBtn").disabled=true;status("Loading your questions…");
+ els("startBtn").disabled=true;status("Loading your survey...");
  try{
-  const data=await call("/ballot",{name});
+  const data=await call("/response",{name});
   name=data.name;localStorage.setItem("gerald_family_name_v1",name);
-  ballots=data.ballots;noteSaved=data.note||"";selected.clear();saved.clear();
-  if(ballots.length!==5)throw Error("The five questions are not ready yet");
-  ballots.forEach(b=>{saved.set(b.poll_id,b.selected_option_id);if(b.selected_option_id!==null)selected.set(b.poll_id,b.selected_option_id)});
-  els("identity").hidden=true;els("who").textContent="Answering as "+name+". Need another name? Reopen the group link in a private tab.";
-  renderPolls();
-  if(ballots.every(b=>b.selected_option_id!==null))showDone();
-  else {els("answers").hidden=false;status("Choose one answer in each section.");els("answers").scrollIntoView({behavior:"smooth",block:"start"})}
- }catch(e){status("Couldn't load your survey: "+e.message,true)}finally{els("startBtn").disabled=false}
+  activities=data.activities||[];
+  if(activities.length<3)throw Error("Activity choices are not ready");
+  hydrate(data.response);
+  els("identity").hidden=true;
+  els("who").textContent="Answering as "+name+". To use a different name, reopen the link in a private tab.";
+  if(data.response)showDone();
+  else{els("answers").hidden=false;status("Choose your dates and favorites.");els("answers").scrollIntoView({behavior:"smooth",block:"start"})}
+ }catch(e){status("Couldn't load your survey: "+e.message,true)}
+ finally{els("startBtn").disabled=false}
 });
 els("submitBtn").addEventListener("click",async()=>{
  if(saving)return;
- const missing=ballots.find(b=>!selected.has(b.poll_id));
- if(missing){status("Choose one answer for all five questions.",true);els("q"+missing.poll_id).scrollIntoView({behavior:"smooth"});return}
- saving=true;els("submitBtn").disabled=true;status("Saving your answers…");
+ const coming=selectedRadio("coming"),holiday=selectedRadio("holiday");
+ if(!coming){status("Please say whether you're coming.",true);els("q-attendance").scrollIntoView({behavior:"smooth"});return}
+ const arr=els("arrival").value||null,dep=els("departure").value||null;
+ if(coming==="yes"&&(!arr||!dep)){
+  status("Please select your arrival and departure days, or choose 'Not sure yet'.",true);
+  els("q-attendance").scrollIntoView({behavior:"smooth"});return;
+ }
+ if(coming==="unsure"&&Boolean(arr)!==Boolean(dep)){
+  status("If you have tentative dates, enter both arrival and departure.",true);
+  els("q-attendance").scrollIntoView({behavior:"smooth"});return;
+ }
+ if(coming!=="no"&&arr&&dep&&arr>dep){
+  status("Your departure day must be on or after your arrival day.",true);
+  els("q-attendance").scrollIntoView({behavior:"smooth"});return;
+ }
+ if(coming!=="no"&&!holiday){status("Please answer the Holiday World question.",true);els("q-holiday").scrollIntoView({behavior:"smooth"});return}
+ const interested=coming==="no"?[]:[...interestSet];
+ const favorites=coming==="no"?[]:[...favoriteSet];
+ const payload={name,coming,arrival_on:coming==="no"?null:arr,departure_on:coming==="no"?null:dep,
+  holiday_world:coming==="no"?"no":holiday,interested,favorites,note:els("note").value.trim(),request_id:crypto.randomUUID()};
+ saving=true;els("submitBtn").disabled=true;status("Saving and verifying your answers...");
  try{
-  for(const b of ballots){
-   const choice=selected.get(b.poll_id);
-   if(choice===saved.get(b.poll_id))continue;
-   await call("/vote",{name,poll_id:b.poll_id,option_id:choice,request_id:crypto.randomUUID()});
-   saved.set(b.poll_id,choice);
-  }
-  const check=await call("/ballot",{name});
-  if(check.ballots.length!==5||check.ballots.some(b=>b.selected_option_id!==selected.get(b.poll_id)))throw Error("Not all five answers were verified. Try again.");
-  ballots=check.ballots;noteSaved=check.note||"";showDone();
- }catch(e){status("Please check and retry: "+e.message,true)}
+  const result=await call("/submit",payload);
+  if(!result.saved)throw Error("Save not confirmed");
+  const check=await call("/response",{name});
+  const r=check.response;
+  if(!r||r.coming!==payload.coming||r.holiday_world!==payload.holiday_world||
+      (r.arrival_on||null)!==payload.arrival_on||(r.departure_on||null)!==payload.departure_on||
+      JSON.stringify(r.interested)!==JSON.stringify(payload.interested)||
+      JSON.stringify(r.favorites)!==JSON.stringify(payload.favorites)||
+      (r.note||"")!==payload.note)throw Error("Readback did not match. Refresh to check before resubmitting.");
+  current=r;showDone();
+ }catch(e){status("Couldn't confirm your answers: "+e.message,true)}
  finally{saving=false;els("submitBtn").disabled=false}
 });
 els("editBtn").addEventListener("click",()=>{
- els("done").hidden=true;els("answers").hidden=false;renderPolls();status("You can change any answer, then submit again.");
+ els("done").hidden=true;els("answers").hidden=false;hydrate(current);
+ status("Update anything you like, then save again.");
  els("answers").scrollIntoView({behavior:"smooth",block:"start"});
 });
-els("saveNote").addEventListener("click",async()=>{
- const desired=els("note").value.trim();els("saveNote").disabled=true;els("noteStatus").textContent="Saving…";
- try{
-  const result=await call("/feedback",{name,note:desired});
-  if(!result.saved||result.note!==desired)throw Error("Save not confirmed");
-  const verify=await call("/ballot",{name});
-  if(verify.note!==desired)throw Error("Note verification failed");
-  noteSaved=desired;els("noteStatus").textContent="Your note is saved. Thanks!";
- }catch(e){els("noteStatus").textContent="Could not verify the save: "+e.message}
- finally{els("saveNote").disabled=false}
-});
+populateDates();
 (async()=>{
  if(!token){els("notice").textContent="Open the family link from the group text to view the trip and survey.";els("notice").className="notice error";els("topTake").disabled=true;return}
  try{
