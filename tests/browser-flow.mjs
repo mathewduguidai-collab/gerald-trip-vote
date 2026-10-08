@@ -21,7 +21,7 @@ const polls=[
  {poll_id:9,title:'Saturday late',selected_option_id:null,options:[{id:20,title:'Cabaret',description:'Evening',estimated_cost:null},{id:21,title:'Drinks',description:'Bar',estimated_cost:null}]},
  {poll_id:10,title:'Sunday',selected_option_id:null,options:[{id:25,title:'Brunch',description:'Rest',estimated_cost:null},{id:23,title:'Museum',description:'Visit',estimated_cost:null}]}
 ];
-let saved=Object.create(null), writes=0, failAfter=-1;
+let saved=Object.create(null), writes=0, failAfter=-1, failAfterWrite=-1;
 const context=await browser.newContext({viewport:{width:390,height:844}});
 const page=await context.newPage();
 await page.route('https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-trip-vote/**',async route=>{
@@ -35,7 +35,8 @@ await page.route('https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-t
   else {
    const body=JSON.parse(route.request().postData());
    saved[body.poll_id]=body.option_id;
-   reply={accepted:true,poll_id:body.poll_id,option_id:body.option_id,request_id:body.request_id};
+   if(writes===failAfterWrite){status=503;reply={error:'response_lost_after_server_commit'};}
+   else reply={accepted:true,poll_id:body.poll_id,option_id:body.option_id,request_id:body.request_id};
   }
  }else{status=404;reply={error:'unknown'};}
  await route.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(reply)});
@@ -51,6 +52,10 @@ try{
  await page.locator('input[name="vote-7"][value="13"]').check();
  await page.locator('input[name="vote-8"][value="18"]').check();
  await page.locator('input[name="vote-9"][value="20"]').check();
+ // Show a clear error when the fifth choice is missing; do not save partial data.
+ await page.locator('#submit-all').click();
+ await page.getByText('Please choose an answer',{exact:false}).waitFor();
+ assert.equal(writes,0,'no writes until all five answered');
  await page.locator('input[name="vote-10"][value="25"]').check();
  await page.getByText('5 of 5 choices selected').waitFor();
  await page.locator('#submit-all').click();
@@ -71,9 +76,37 @@ try{
  await page.locator('input[name="vote-7"][value="14"]').check();
  failAfter=writes+1;
  await page.locator('#submit-all').click();
- await page.getByText('Not all votes could be confirmed',{exact:false}).waitFor();
+ await page.getByText('Not all votes are verified',{exact:false}).waitFor();
  assert.equal(await page.getByRole('heading',{name:'All done. Your votes are saved!'}).count(),0,'no false success on failed write');
- console.log('PASS: mobile first-time 5-vote flow, one submit, durable confirmation, returning summary, edit-only resubmission, graceful failure, venue research links');
+ failAfter=-1;
+ await page.locator('#submit-all').click();
+ await page.getByRole('heading',{name:'All done. Your votes are saved!'}).waitFor();
+ assert.equal(saved[7],14,'failed selection can be saved on retry');
+ // A lost server response after a successful write must be reconciled by readback.
+ await page.getByRole('button',{name:'Review or change my votes'}).click();
+ await page.locator('input[name="vote-9"][value="21"]').check();
+ failAfterWrite=writes+1;
+ await page.locator('#submit-all').click();
+ await page.getByRole('heading',{name:'All done. Your votes are saved!'}).waitFor();
+ assert.equal(saved[9],21,'lost response is recovered through authoritative readback');
+ failAfterWrite=-1;
+ // If the second of two writes fails, report partial progress and only retry the missing one.
+ await page.getByRole('button',{name:'Review or change my votes'}).click();
+ await page.locator('input[name="vote-8"][value="16"]').check();
+ await page.locator('input[name="vote-10"][value="23"]').check();
+ const before=writes;
+ failAfter=writes+2;
+ await page.locator('#submit-all').click();
+ await page.getByText('Not all votes are verified',{exact:false}).waitFor();
+ assert.equal(saved[8],16,'first vote committed in partial failure');
+ assert.equal(saved[10],25,'second vote not committed');
+ failAfter=-1;
+ await page.locator('#submit-all').click();
+ await page.getByRole('heading',{name:'All done. Your votes are saved!'}).waitFor();
+ assert.equal(writes,before+3,'retry sent just one remaining option');
+ assert.equal(saved[10],23);
+ // The initial blank state can be restored without writing to the real backend.
+ console.log('PASS: mobile blank-five, missing choice, single submit, durable readback, saved summary, editing, no double-save, rejected request retry, partial-write recovery, server-committed lost response and linked lodging choices');
 }finally{
  await browser.close();
  await new Promise(done=>server.close(done));
