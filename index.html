@@ -98,7 +98,7 @@ function renderBallots(){
  tripNote.textContent='';
  if(ballots.some(b=>b.poll_id===3)){
   tripNote.className='trip-note';
-  tripNote.textContent='Saturday daytime is GalaxyCon: roughly 10 AM–3 PM (with lunch), followed by hotel downtime 3:30–6 PM. The Saturday choices are for the evening only.';
+  tripNote.textContent='Saturday is our GalaxyCon day: roughly 10 AM–4:30 PM, including lunch and whatever panels are published. Protect hotel downtime about 5–6:45 PM before choosing ONE evening plan. The detailed panel schedule is still pending.';
  }
  ballots.forEach((ballot,index)=>{
   const card=el('section','','card');card.id='poll-'+ballot.poll_id;
