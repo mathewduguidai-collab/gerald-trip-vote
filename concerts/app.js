@@ -31,6 +31,7 @@
       +'</div></div>').join("");
     const all=(s.all_performers||[]).map(x=>x.name).filter(Boolean).join(" · ");
     const link=s.url ? url(s.url):"";
+    const lookup=url("https://www.google.com/search?q="+encodeURIComponent([s.name,s.venue,s.city,String(s.date||"").slice(0,10),"concert tickets"].filter(Boolean).join(" ")));
     const drive=s.drive_quality==="city_estimate"&&s.drive_minutes!=null
       ? "~"+num(s.drive_minutes)+" min city-level estimate; venue route NOT checked"
       :s.drive_quality==="venue_route_recorded"&&s.drive_minutes!=null
@@ -42,7 +43,7 @@
       +(all?'<p><strong>Full listed bill:</strong> '+e(all)+'</p>':'')
       +'<p><strong>Drive:</strong> '+e(drive)+'</p>'
       +'<p><strong>Tickets:</strong> '+(s.ticket_status==="SOLD_OUT"?"Official source reported sold out.":"Availability not checked.")+'</p>'
-      +'<p><strong>Source:</strong> '+(s.source_quality==="official_listed"?"Official event information located":"Regional listing; check official details")+(link?' · <a href="'+e(link)+'" target="_blank" rel="noopener noreferrer">Source details ↗</a>':'')+'</p>'
+      +'<p><strong>Source:</strong> '+(s.source_quality==="official_listed"?"Official event information located":"Regional listing; check official details")+(link?' · <a href="'+e(link)+'" target="_blank" rel="noopener noreferrer">Source details ↗</a>':' · <a href="'+e(lookup)+'" target="_blank" rel="noopener noreferrer">Search for show details ↗</a>')+'</p>'
       +'</div></div>';
   }
   function card(s){
@@ -54,13 +55,14 @@
     if(s.source_quality!=="official_listed")badges.push('<span class="badge source">Discovery candidate</span>');
     if(s.drive_quality!=="venue_route_recorded")badges.push('<span class="badge route">Drive unverified</span>');
     const link=url(s.url);
+    const lookup=url("https://www.google.com/search?q="+encodeURIComponent([s.name,s.venue,s.city,String(s.date||"").slice(0,10),"concert tickets"].filter(Boolean).join(" ")));
     return '<article class="show">'
       +'<div class="card-top"><span class="datebadge">'+e(dateLabel(s.date))+'</span><div class="score" title="Relative matching score; not a probability"><strong>'+Number(s.score||0).toFixed(0)+'</strong><span>match pts</span></div></div>'
       +'<div class="show-body"><h3>'+e(s.name)+'</h3><p class="venue">'+e(s.venue||"Venue to be confirmed")+' · '+e(s.city)+(s.region?', '+e(s.region):'')+'</p>'
       +'<p class="lineup-preview">'+e((s.artists||[]).map(a=>a.name).join(" · "))+'</p>'
       +'<div class="badge-row">'+badges.join("")+'</div></div>'
       +'<div class="card-actions"><button class="details-button" type="button" data-open="'+e(s.id)+'" aria-expanded="false" aria-controls="detail-'+e(s.id)+'">▸ Spotify rankings <span aria-hidden="true">↓</span></button>'
-      +(link?'<a class="event-link" href="'+e(link)+'" target="_blank" rel="noopener noreferrer">View source ↗</a>':'<span class="event-link">Source on file</span>')
+      +(link?'<a class="event-link" href="'+e(link)+'" target="_blank" rel="noopener noreferrer">View source ↗</a>':'<a class="event-link" href="'+e(lookup)+'" target="_blank" rel="noopener noreferrer">Search this show ↗</a>')
       +'</div>'+details(s)+'</article>';
   }
   function bestRank(s,key){const vals=(s.artists||[]).map(a=>Number(a[key])).filter(n=>n>0);return vals.length?Math.min(...vals):1e6;}
