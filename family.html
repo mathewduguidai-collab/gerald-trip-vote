@@ -281,7 +281,7 @@ els("startBtn").addEventListener("click",async()=>{
  try{
   const data=await call("/response",{name});
   name=data.name;localStorage.setItem("gerald_family_name_v1",name);
-  activities=data.activities||[];
+  activities=(data.activities||[]).filter(x=>x.code!=="cabin");
   if(activities.length<3)throw Error("Activity choices are not ready");
   hydrate(data.response);
   els("identity").hidden=true;
