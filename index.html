@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://splsniqrunknnwhccrxo.supabase.co; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://splsniqrunknnwhccrxo.supabase.co; img-src https://www.frenchlick.com; base-uri 'none'; form-action 'none'">
 <title>Gerald Trip Decisions</title>
 <style>
 :root{color-scheme:light;font:16px system-ui,-apple-system,sans-serif;background:#f5f6f8;color:#1a2735}
-body{max-width:650px;margin:auto;padding:20px 16px 70px}header{padding:8px 0 16px}
+body{max-width:1080px;margin:auto;padding:20px 16px 70px}header{padding:8px 0 16px;max-width:650px;margin:auto}#ballots,#status,#trip-note,body>footer{max-width:650px;margin:auto}#status{margin-bottom:16px}#trip-note{margin-bottom:18px}
 h1{font-size:1.7rem;margin:6px 0}h2{font-size:1.16rem;margin:0 0 4px}
 p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px solid #dae0e5;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 10px #1d2b3910}
 .choice{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:10px 0;border:1px solid #dce0e4;border-radius:10px;cursor:pointer}
@@ -14,9 +14,18 @@ p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px so
 button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
 button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
 .error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}.feedback-panel{margin-top:24px;padding:20px 0 5px;border-top:2px solid #e2eaf0;text-align:left}.feedback-panel h3{font-size:1.12rem;color:#163d59;margin:0 0 8px}.feedback-panel p{font-size:.92rem;color:#596779}.feedback-panel textarea{box-sizing:border-box;width:100%;min-height:125px;resize:vertical;border:1px solid #bac9d5;border-radius:10px;padding:13px;font:inherit;line-height:1.45;background:white;color:#1a2735}.feedback-panel textarea:focus{outline:2px solid #267ba4;outline-offset:1px}.feedback-panel button{margin-top:12px}.feedback-result{font-size:.91rem;margin:10px 0 3px;min-height:1.3em}.feedback-result.error{padding:10px;border-radius:6px}
+
+.week-section{margin:10px 0 28px}.week-section h2{font-size:1.4rem}.week-section>p{color:#536572}
+.week-scroll{overflow-x:auto;padding:4px 0 12px}.week-days{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));min-width:1000px;gap:8px}
+.week-day{background:#fff;border:1px solid #d5dfe7;border-top:4px solid #327793;border-radius:9px;padding:14px 11px;min-width:0}
+.week-day h3{font-size:1rem;margin:0 0 12px;color:#15425f}.week-day p{margin:8px 0;font-size:.9rem;line-height:1.5;overflow-wrap:anywhere}.week-day strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:#546d7c;margin-bottom:3px}
+.week-footer{font-size:.92rem}.ideas-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.idea{border-bottom:1px solid #d5dfe7;padding:12px 0}.idea h3{font-size:1rem;margin:0 0 5px}.idea p{font-size:.92rem;margin:6px 0}.idea .research{margin:8px 0}.ideas-hint{font-size:.92rem}
+@media(max-width:600px){.ideas-grid{grid-template-columns:1fr}.week-days{min-width:1050px}.week-day{padding:12px}.week-section>p{font-size:.92rem}}
+.activity-photo{margin:12px 0}.activity-photo img{display:block;width:100%;max-height:250px;object-fit:cover;border-radius:9px}.activity-photo figcaption{font-size:.75rem;color:#60717c;margin-top:4px}
 </style></head><body>
 <header><small>GERALD · TRIP PLANNING</small><h1>Trip preferences</h1>
 <p>Choose one option in each section, then tap <b>Submit all votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
+<section id="week-overview"></section><section id="activity-ideas"></section>
 <div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
 <footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
 <script>
@@ -95,8 +104,52 @@ function show(message,isError=false){
 }
 let ballots=[];
 let presentation={};
+function makeActivityPhoto(choice){
+ if(typeof choice.image_url!=='string'||!choice.image_url.startsWith('https://www.frenchlick.com/files/'))return null;
+ const figure=el('figure','','activity-photo'),img=document.createElement('img');
+ img.src=choice.image_url;img.alt=choice.image_alt||choice.title||'Activity photo';
+ img.loading='lazy';img.referrerPolicy='no-referrer';
+ img.addEventListener('error',()=>figure.remove());figure.append(img);
+ if(choice.image_credit)figure.append(el('figcaption',choice.image_credit));
+ return figure;
+}
+function renderPlanningOverview(){
+ const week=document.getElementById('week-overview'), ideas=document.getElementById('activity-ideas');
+ week.replaceChildren();ideas.replaceChildren();
+ const days=Array.isArray(presentation.week_days)?presentation.week_days.slice(0,7):[];
+ if(days.length){
+  week.className='week-section';week.append(el('h2',presentation.week_title||'Your week at a glance'));
+  week.append(el('p',presentation.week_help||'Draft options. Swipe sideways on your phone to see the whole week.'));
+  const scroll=el('div','','week-scroll');scroll.setAttribute('role','region');scroll.setAttribute('aria-label','Seven-day trip overview');
+  const strip=el('div','','week-days');
+  days.forEach(day=>{
+   const card=el('article','','week-day');card.append(el('h3',day.label||'Day'));
+   for(const [key,label] of [['main','Main plan'],['optional','Options'],['pace','Downtime']]){
+    if(day[key]){const p=el('p');p.append(el('strong',label),el('span',day[key]));card.append(p);}
+   }
+   strip.append(card);
+  });
+  scroll.append(strip);week.append(scroll);
+  if(presentation.week_footer)week.append(el('p',presentation.week_footer,'week-footer'));
+ }
+ const activities=Array.isArray(presentation.activity_ideas)?presentation.activity_ideas.slice(0,6):[];
+ if(activities.length){
+  ideas.className='week-section';ideas.append(el('h2','More ideas for your free time'));
+  ideas.append(el('p','These are optional alternatives, not extra commitments. Choose your Thursday favorite below; mention other interests in your response note.','ideas-hint'));
+  const grid=el('div','','ideas-grid');
+  activities.forEach(idea=>{
+   const card=el('article','','idea');card.append(el('h3',idea.title||'Activity idea'));
+   const photo=makeActivityPhoto(idea);if(photo)card.append(photo);
+   if(idea.description)card.append(el('p',idea.description));
+   const links=lookupLinks(null,idea);if(links.childElementCount)card.append(links);
+   grid.append(card);
+  });
+  ideas.append(grid);
+ }
+}
 function applyPresentation(data){
  presentation=data.presentation||{};
+ renderPlanningOverview();
  document.querySelector('header h1').textContent=presentation.heading||data.trip_title||'Trip preferences';
  document.querySelector('header p').textContent=presentation.intro||'Choose one option per section and Submit all votes. Links open separately. Nothing here books or pays for anything.';
 }
@@ -148,7 +201,9 @@ function renderBallots(){
     details.append(el('span',label+choice.estimated_cost));
    }
    label.append(radio,details);
-   const entry=el('div');entry.append(label);
+   const entry=el('div');
+   const photo=makeActivityPhoto(choice);if(photo)entry.append(photo);
+   entry.append(label);
    const research=lookupLinks(choice.id,choice);
    if(research.childElementCount)entry.append(research);
    choices.append(entry);
