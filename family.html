@@ -163,6 +163,7 @@ function buildLanding(landing){
    const pic=document.createElement("img");pic.src=item.image;pic.loading="lazy";pic.alt=item.title||"Vacation activity";pic.referrerPolicy="no-referrer";card.append(pic);
   }
   card.append(textNode("h3",item.title),textNode("p",item.detail,"subtle"));
+  const fact=ideaFactCode(item);if(fact)showTravelFacts(card,fact);
   const link=urlLink(item.url,"See details ↗");if(link)card.append(link);ideas.append(card);
  }
  els("info").hidden=false;els("survey").hidden=false;
