@@ -10,6 +10,42 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
+      - name: Guard HTML structure and JavaScript syntax BEFORE deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          p=Path('index.html')
+          raw=p.read_text(encoding='utf-8')
+          assert raw.count('<script>') == 1, 'expected one script'
+          assert raw.count('</script>') == 1, 'script closed prematurely or duplicated'
+          assert raw.count('</body>') == 1, 'body end duplicated'
+          assert raw.count('</html>') == 1, 'HTML end duplicated'
+          assert raw.strip().endswith('</html>'), 'unexpected page text after HTML'
+          assert 'Google Maps' in raw and "const BASE=" in raw
+          js=raw.split('<script>',1)[1].split('</script>',1)[0]
+          assert len(js)>1500
+          Path('/tmp/gerald-vote-check.js').write_text(js)
+          class VisibleText(HTMLParser):
+              inside_script=False
+              visible=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag=='script':self.inside_script=True
+              def handle_endtag(self,tag):
+                  if tag=='script':self.inside_script=False
+              def handle_data(self,data):
+                  if not self.inside_script:self.visible.append(data)
+          parsed=VisibleText()
+          parsed.feed(raw)
+          visible=' '.join(parsed.visible)
+          assert 'card.append(form)' not in visible, 'JavaScript leaked into visible page'
+          print('PASS: one complete HTML document, no visible script leakage')
+          PY
+          node --check /tmp/gerald-vote-check.js
+          echo 'PASS: frontend JavaScript parses without syntax errors'
       - name: Check actual public Pages HTML
         shell: bash
         run: |
