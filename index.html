@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://splsniqrunknnwhccrxo.supabase.co; base-uri 'none'; form-action 'none'">
+<title>Gerald Trip Decisions</title>
+<style>
+:root{color-scheme:light;font:16px system-ui,-apple-system,sans-serif;background:#f5f6f8;color:#1a2735}
+body{max-width:650px;margin:auto;padding:20px 16px 70px}header{padding:8px 0 16px}
+h1{font-size:1.7rem;margin:6px 0}h2{font-size:1.16rem;margin:0 0 4px}
+p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px solid #dae0e5;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 10px #1d2b3910}
+.choice{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:10px 0;border:1px solid #dce0e4;border-radius:10px;cursor:pointer}
+.choice input{margin-top:4px;accent-color:#184b72;min-width:18px;height:18px}
+.choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}
+button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
+button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
+.error{background:#fce9e9;color:#862a2a}footer{font-size:.85rem;color:#687280}
+</style></head><body>
+<header><small>GERALD · TRIP PLANNING</small><h1>Help choose the trip</h1>
+<p>Vote on each decision separately. You can change your vote until its deadline. Nothing here books a hotel, spends money, or makes a reservation.</p></header>
+<div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
+<footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
+<script>
+const BASE='https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-trip-vote';
+const params=new URLSearchParams(location.hash.slice(1));
+const supplied=params.get('token');
+if(supplied && /^[a-f0-9]{64}$/.test(supplied)){sessionStorage.setItem('gerald_trip_invite_v1',supplied);history.replaceState(null,'',location.pathname)}
+const token=sessionStorage.getItem('gerald_trip_invite_v1');
+const status=document.getElementById('status'), root=document.getElementById('ballots');
+const el=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x};
+async function call(route,body){
+ const r=await fetch(BASE+route,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+ const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');return data;
+}
+function show(message,isError=false){status.textContent=message;status.className=isError?'notice error':'notice'}
+async function load(){
+ if(!token){show('This is a private voting link. Open the link sent to you by the trip organizer.',true);return}
+ try{
+  const data=await call('/ballot',{});root.replaceChildren();
+  if(!data.ballots.length){show('No ballots are currently open. The organizer may still be preparing the choices.');return}
+  show('Your choices are private to the trip organizer.');
+  for(const ballot of data.ballots){
+   const card=el('section','','card');card.append(el('h2',ballot.title));
+   card.append(el('p',ballot.closes_at?'Closes '+new Date(ballot.closes_at).toLocaleString(): 'No deadline set yet','hint'));
+   const form=el('div');let current=ballot.selected_option_id;
+   for(const choice of ballot.options){
+    const label=el('label','','choice'),radio=document.createElement('input');radio.type='radio';radio.name='vote-'+ballot.poll_id;radio.value=choice.id;radio.checked=current===choice.id;
+    const container=el('div');container.append(el('strong',choice.title));
+    if(choice.description)container.append(el('span',choice.description));
+    if(choice.estimated_cost!==null)container.append(el('span','Estimated: $'+choice.estimated_cost+' (verify pricing before booking)'));
+    label.append(radio,container);form.append(label)
+   }
+   card.append(form);const btn=el('button',current?'Update my vote':'Save my vote');
+   btn.addEventListener('click',async ()=>{
+    const selected=form.querySelector('input:checked');if(!selected){show('Choose one option before saving.',true);return}
+    btn.disabled=true;
+    try{const saved=await call('/vote',{poll_id:ballot.poll_id,option_id:Number(selected.value),request_id:crypto.randomUUID()});
+      if(saved.accepted){current=saved.option_id;btn.textContent='Update my vote';show('Vote saved. You can change it until the deadline.')}
+    }catch(e){show('Vote not confirmed ('+e.message+'). Refresh to check before trying again.',true)}
+    finally{btn.disabled=false}
+   });
+   card.append(btn);root.append(card)
+  }
+ }catch(e){show('Could not load ballot: '+e.message,true)}
+}
+load();
+</script></body></html>
