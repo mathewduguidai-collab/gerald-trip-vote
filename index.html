@@ -13,7 +13,7 @@ p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px so
 .choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}.research{display:flex;flex-wrap:wrap;gap:14px;margin:-2px 0 15px 31px;font-size:.88rem}.research a{color:#15547d;font-weight:600;padding:4px 0}.trip-note{background:#e8f3fa;border-left:4px solid #236c99;padding:13px 16px;margin-bottom:18px;border-radius:8px;line-height:1.55}
 button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
 button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
-.error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}
+.error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}.feedback-panel{margin-top:24px;padding:20px 0 5px;border-top:2px solid #e2eaf0;text-align:left}.feedback-panel h3{font-size:1.12rem;color:#163d59;margin:0 0 8px}.feedback-panel p{font-size:.92rem;color:#596779}.feedback-panel textarea{box-sizing:border-box;width:100%;min-height:125px;resize:vertical;border:1px solid #bac9d5;border-radius:10px;padding:13px;font:inherit;line-height:1.45;background:white;color:#1a2735}.feedback-panel textarea:focus{outline:2px solid #267ba4;outline-offset:1px}.feedback-panel button{margin-top:12px}.feedback-result{font-size:.91rem;margin:10px 0 3px;min-height:1.3em}.feedback-result.error{padding:10px;border-radius:6px}
 </style></head><body>
 <header><small>GERALD · TRIP PLANNING</small><h1>Vote on our Columbus weekend</h1>
 <p>Choose one option in each section, then tap <b>Submit all five votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
@@ -82,6 +82,8 @@ let ballots=[];
 const chosen=new Map();
 const committed=new Map();
 let submitting=false;
+let savedFeedback='';
+let feedbackSaving=false;
 const pendingRequestIds=new Map();
 function countSelected(){return ballots.filter(b=>chosen.has(b.poll_id)).length}
 function updateProgress(){
@@ -139,6 +141,53 @@ function renderBallots(){
  actions.append(progress,submit,note);root.append(actions);updateProgress();
  show('Your answers are private to the organizer. Nothing is saved until you use the button below.');
 }
+function makeFeedbackPanel(){
+ const panel=el('section','','feedback-panel');
+ panel.append(el('h3','Any other ideas or requests?'));
+ panel.append(el('p','Optional: a must-see GalaxyCon guest, a lunch spot, or something you want us to work into the weekend. Gerald will review these alongside everyone’s votes before planning the final itinerary.'));
+ const field=document.createElement('textarea');
+ field.id='additional-requests';
+ field.rows=5;field.maxLength=2000;
+ field.setAttribute('aria-label','Additional trip requests');
+ field.placeholder='For example: I really want to see the Saturday cosplay contest, or let’s try a specific lunch place…';
+ field.value=savedFeedback;
+ const feedbackStatus=el('div','','feedback-result');feedbackStatus.id='feedback-result';
+ feedbackStatus.setAttribute('role','status');
+ const count=el('small','Up to 2,000 characters. Leave blank if you have nothing to add.');
+ const save=el('button',savedFeedback?'Update my request':'Save additional request','secondary');
+ save.type='button';save.id='save-feedback';
+ if(!savedFeedback)save.disabled=true;
+ const updateButton=()=>{
+  const desired=field.value.trim();
+  save.disabled=feedbackSaving||(desired===savedFeedback);
+  save.textContent=!desired&&savedFeedback?'Remove my request':savedFeedback?'Update my request':'Save additional request';
+  count.textContent=field.value.length+' / 2,000 characters · Optional';
+ };
+ field.addEventListener('input',updateButton);
+ save.addEventListener('click',async()=>{
+  if(feedbackSaving)return;
+  const desired=field.value.trim();
+  if(desired===savedFeedback)return;
+  feedbackSaving=true;save.disabled=true;field.disabled=true;
+  feedbackStatus.className='feedback-result';
+  feedbackStatus.textContent='Saving your request…';
+  try{
+   const result=await call('/feedback',{note:desired});
+   if(!result.saved||result.feedback_text!==desired)throw Error('Save was not confirmed');
+   const verification=await call('/ballot',{});
+   if((verification.feedback_text??'')!==desired)throw Error('Saved note could not be verified');
+   savedFeedback=desired;
+   feedbackStatus.textContent=desired?'Request saved. Gerald will consider it when building the final agenda.':'Your additional request has been removed.';
+  }catch(e){
+   feedbackStatus.className='feedback-result error';
+   feedbackStatus.textContent='Unable to confirm request ('+e.message+'). Your five votes are still saved. Refresh to check before trying again.';
+  }finally{
+   feedbackSaving=false;field.disabled=false;updateButton();
+  }
+ });
+ panel.append(field,count,save,feedbackStatus);
+ return panel;
+}
 function showDone(){
  tripNote.replaceChildren();root.replaceChildren();
  const section=el('section','','card done');
@@ -159,6 +208,7 @@ function showDone(){
  edit.type='button';
  edit.addEventListener('click',()=>{renderBallots();window.scrollTo(0,0)});
  section.append(edit);
+ section.append(makeFeedbackPanel());
  root.append(section);
  show('All '+ballots.length+' votes are saved.');
  window.scrollTo(0,0);
@@ -199,6 +249,7 @@ async function submitAll(){
   const latest=await call('/ballot',{});
   if(latest.ballots.length!==ballots.length)throw Error('Ballot count changed');
   ballots=latest.ballots;
+  savedFeedback=latest.feedback_text??'';
   latest.ballots.forEach(b=>{
    committed.set(b.poll_id,b.selected_option_id);
    if(b.selected_option_id===desired.get(b.poll_id))pendingRequestIds.delete(b.poll_id);
@@ -223,6 +274,7 @@ async function load(){
  try{
   const data=await call('/ballot',{});
   ballots=data.ballots;
+  savedFeedback=data.feedback_text??'';
   if(!ballots.length){show('No ballots are currently open. Check with the organizer if you expected one.');return}
   ballots.forEach(b=>{
    committed.set(b.poll_id,b.selected_option_id);
