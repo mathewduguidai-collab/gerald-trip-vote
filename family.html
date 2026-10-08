@@ -155,7 +155,7 @@ function buildLanding(landing){
  const days=els("days"),ideas=els("ideas");days.replaceChildren();ideas.replaceChildren();
  for(const item of (Array.isArray(landing.days)?landing.days:[]).slice(0,5)){
   const card=textNode("article","","card day"),dot=textNode("div","","dot"),content=textNode("div");
-  content.append(textNode("h3",item.title),textNode("p",item.detail,"subtle"));card.append(dot,content);days.append(card);
+  content.append(textNode("h3",item.title),textNode("p",item.detail,"subtle"));if(/holiday world/i.test((item.title||"")+" "+(item.detail||"")))content.append(textNode("p","Drive from Birdseye area: about 40 min (actual cabin route may vary)","small subtle"));card.append(dot,content);days.append(card);
  }
  for(const item of (Array.isArray(landing.ideas)?landing.ideas:[]).slice(0,8)){
   const card=textNode("article","","card idea");
