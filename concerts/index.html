@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; font-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'">
+  <meta name="theme-color" content="#101f2e">
+  <meta name="description" content="Gerald Concert Radar — find the regional concerts that match your Spotify listening history.">
+  <title>Gerald Concert Radar</title>
+  <link rel="stylesheet" href="./app.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a href="#results" class="skip">Skip to concerts</a>
+  <header class="mast">
+    <div class="wrap">
+      <div class="mast-row"><span class="logo" aria-hidden="true">G<span class="dot">.</span></span><span class="eyebrow">GERALD / CONCERT RADAR</span><span class="tag">BETA · PUBLIC SNAPSHOT</span></div>
+      <div class="hero">
+        <div>
+          <p class="hero-kicker">Your music. Your next show.</p>
+          <h1>Find the shows<br><em>worth showing up for.</em></h1>
+          <p class="intro">Every concert matched to your listening history. Discover your favorite artists, strong double bills, and who's coming nearby—without scrolling through hundreds of listings.</p>
+        </div>
+        <div class="orb" aria-hidden="true"><span>♪</span></div>
+      </div>
+      <div class="statbar" aria-label="Concert inventory summary">
+        <div><strong id="stat-shows">—</strong><span>matching shows</span></div>
+        <div><strong id="stat-artists">—</strong><span>artist appearances</span></div>
+        <div><strong id="stat-pairings">—</strong><span>multi-artist bills</span></div>
+        <div><strong id="stat-favorites">—</strong><span>favorite shows</span></div>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="controls" aria-label="Concert filters">
+      <div class="section-title"><div><p class="overline">THE LINEUP</p><h2>Concerts for you</h2></div><p class="snapshot" id="snapshot-date">Loading snapshot…</p></div>
+      <div class="search-row">
+        <label class="search-box"><span class="visually-hidden">Search artists, venues or cities</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" autocomplete="off" placeholder="Search artists, shows or venues…" aria-label="Search artists, shows or venues"></label>
+        <label class="select-box"><span>Sort</span><select id="sort" aria-label="Sort concerts">
+          <option value="score">Best match</option><option value="date">Show date</option><option value="recent">Recent listening</option><option value="lifetime">Lifetime listening</option><option value="lineup">Most matched artists</option>
+        </select></label>
+      </div>
+      <div class="chiprow" role="group" aria-label="Filter concert types">
+        <button type="button" data-filter="all" class="chip active" aria-pressed="true">All matches</button>
+        <button type="button" data-filter="favorites" class="chip" aria-pressed="false">★ Favorites</button>
+        <button type="button" data-filter="headliners" class="chip" aria-pressed="false">Headliners</button>
+        <button type="button" data-filter="multi" class="chip" aria-pressed="false">Multi-artist shows</button>
+        <button type="button" data-filter="top100" class="chip" aria-pressed="false">Top 100</button>
+      </div>
+      <div class="filter-row">
+        <label>City <select id="city"><option value="all">All cities</option></select></label>
+        <label>Tickets <select id="tickets"><option value="all">Any status</option><option value="not-sold-out">Exclude known sold out</option><option value="sold-out">Known sold out</option></select></label>
+        <span class="resultcount" id="result-count" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+    <section id="results" class="concert-grid" aria-label="Ranked concerts" aria-live="off">
+      <div class="loading">Loading the concert radar…</div>
+    </section>
+    <div id="empty" class="empty" hidden><h3>No matches found.</h3><p>Try clearing your search or choosing another filter.</p><button id="reset" class="reset" type="button">Reset filters</button></div>
+    <div class="pagination"><button id="more" type="button" hidden>Show more concerts ↓</button></div>
+    <section class="about" aria-label="How rankings work">
+      <div><p class="overline">BEHIND THE SCORES</p><h2>More than a play count.</h2></div>
+      <p>Each artist is ranked against <strong id="artist-total">3,715</strong> distinct Spotify album artists. Open a concert to see <strong>lifetime plays, lifetime hours, last-12-month plays, and last-12-month hours</strong>—each with its rank. Whole-show scores reward multiple artists you listen to, especially explicit favorites.</p>
+      <p class="fine">Scores are preference estimates, not ticket availability. Most events are regional discovery candidates; verify dates, bills, ticket inventory and actual driving routes on official pages before making plans. A missing ticket status means unknown, not available. This public snapshot does not update automatically.</p>
+    </section>
+  </main>
+  <footer class="footer"><div class="wrap"><strong>GERALD<span>·</span> CONCERT RADAR</strong><p>Made for discovering shows, not missing them. <span id="footer-asof"></span></p><p>Public listening-match snapshot · No location, login or payment information collected.</p></div></footer>
+</body>
+</html>
