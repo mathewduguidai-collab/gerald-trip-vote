@@ -40,7 +40,15 @@ const placeQueries={
   23:'National Veterans Memorial and Museum Columbus Ohio',
   24:'Greater Columbus Convention Center 400 N High St Columbus Ohio',
   25:'brunch downtown Columbus Ohio',
-  28:'Hampton Inn and Suites Columbus Downtown 501 N High St Columbus Ohio'
+  28:'Hampton Inn and Suites Columbus Downtown 501 N High St Columbus Ohio',
+  39:'Metropolitan at The 9 Cleveland Ohio',
+  40:'Residence Inn by Marriott Cleveland Downtown',
+  41:'Marble Room Steaks and Raw Bar Cleveland Ohio',
+  42:'Il Rione Pizzeria Cleveland Ohio',
+  43:'Superelectric Pinball Parlor Cleveland Ohio',
+  45:'Rocket Arena Cleveland Ohio',
+  47:'Five Iron Golf Cleveland Downtown Ohio',
+  48:'West Side Market Cleveland Ohio'
 };
 const eventUrls={
   7:'https://www.marriott.com/en-us/hotels/cmhak-hotel-leveque-autograph-collection/overview/',
@@ -52,7 +60,15 @@ const eventUrls={
   20:'https://galaxycon.com/pages/galaxycon-columbus-special-events',
   23:'https://nationalvmm.org/visit/tickets/',
   24:'https://galaxycon.com/pages/galaxycon-columbus',
-  28:'https://www.hilton.com/en/hotels/cmhhshx-hampton-suites-columbus-downtown/'
+  28:'https://www.hilton.com/en/hotels/cmhhshx-hampton-suites-columbus-downtown/',
+  39:'https://www.marriott.com/en-us/hotels/cleak-metropolitan-at-the-9-autograph-collection/overview/',
+  40:'https://www.marriott.com/en-us/hotels/cleri-residence-inn-cleveland-downtown/overview/',
+  41:'https://www.exploretock.com/marbleroomsteaksandrawbar/search?date=2026-11-20&size=3&time=19%3A30',
+  42:'https://www.ilrionepizzeria.com/info',
+  43:'https://www.superelectric.tv/faq',
+  45:'https://clevelandmonsters.com/schedule/home',
+  47:'https://booking.fiveirongolf.com/select-experience?experience=simulator&location=cleveland-downtown',
+  48:'https://westsidemarket.org/location/hours/'
 };
 function placeLink(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
 function lookupLinks(optionId){
