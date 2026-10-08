@@ -1,0 +1,43 @@
+name: Verify Gerald public voting page
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check actual public Pages HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          site='https://mathewduguidai-collab.github.io/gerald-trip-vote/'
+          curl -fsSL --max-time 20 --retry 2 --retry-delay 5 "$site" -o /tmp/page.html
+          grep -q 'Gerald Trip Decisions' /tmp/page.html
+          grep -q "const BASE=" /tmp/page.html
+          ! grep -q 'SUPABASE_DB_URL' /tmp/page.html
+          echo 'PASS: published HTML is voting UI without private DB credential'
+      - name: Check HTTPS backend and allowed browser origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          api='https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-trip-vote'
+          curl -fsSL --max-time 15 "$api/health" -o /tmp/health.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/health.json'))
+          assert data.get('status')=='ok',data
+          print('PASS: backend health')
+          PY
+          curl -sS --max-time 15 -D /tmp/preflight.txt -o /dev/null \
+            -X OPTIONS \
+            -H 'Origin: https://mathewduguidai-collab.github.io' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: authorization,content-type' \
+            "$api/ballot"
+          grep -q '204' /tmp/preflight.txt
+          grep -qi 'access-control-allow-origin: https://mathewduguidai-collab.github.io' /tmp/preflight.txt
+          echo 'PASS: CORS preflight from GitHub Pages origin'
