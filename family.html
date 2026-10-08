@@ -185,6 +185,8 @@ function reflectAttendance(){
  if(coming==="whole"){
   els("arrival").value="2026-10-17";
   els("departure").value="2026-10-24";
+ } else if(coming==="part" && els("arrival").value==="2026-10-17" && els("departure").value==="2026-10-24"){
+  els("arrival").value="";els("departure").value="";
  } else if(coming==="no"){
   els("arrival").value="";els("departure").value="";
  }
@@ -298,7 +300,11 @@ els("submitBtn").addEventListener("click",async()=>{
   status("Please select your arrival and departure days for your partial stay.",true);
   els("q-attendance").scrollIntoView({behavior:"smooth"});return;
  }
-  if(coming==="part"&&arr&&dep&&arr>dep){
+  if(coming==="part"&&arr==="2026-10-17"&&dep==="2026-10-24"){
+  status("Those are the full-trip dates. Select 'I'm coming the whole time' instead.",true);
+  els("q-attendance").scrollIntoView({behavior:"smooth"});return;
+ }
+ if(coming==="part"&&arr&&dep&&arr>dep){
   status("Your departure day must be on or after your arrival day.",true);
   els("q-attendance").scrollIntoView({behavior:"smooth"});return;
  }
