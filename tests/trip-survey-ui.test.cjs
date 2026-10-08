@@ -11,4 +11,16 @@ vm.runInContext(`globalResult=lookupLinks(900,{maps_query:'West Baden Springs Ho
 assert.equal(context.globalResult.children.length,2); assert.match(context.globalResult.children[0].href,/West%20Baden/);
 assert.equal(context.globalResult.children[0].target,'_blank');
 vm.runInContext(`globalResult=lookupLinks(901,{official_url:'javascript:alert(1)'}); applyPresentation({trip_title:'Other trip'});`,context); assert.equal(context.globalResult.children.length,0);assert.equal(elements.get('header h1').textContent,'Other trip');
-console.log('PASS: attendance prompts, neutral answers, dynamic trip/count, separate safe research links, generic fallback');
+vm.runInContext(`applyPresentation({presentation:{week_title:'Seven days',week_days:Array.from({length:7},(_,i)=>({label:'Day '+i,main:'Fishing',optional:'Bowling',pace:'Rest'})),week_footer:'Checkout separately',activity_ideas:[{title:'Indoor option',description:'Optional',official_url:'https://example.com/details',maps_query:'Public venue'}]}});`,context);
+const overview=elements.get('week-overview');
+assert.equal(overview.children[0].textContent,'Seven days');
+assert.equal(overview.children[2].children[0].children.length,7);
+assert.equal(overview.children[3].textContent,'Checkout separately');
+const idea=elements.get('activity-ideas').children[2].children[0];
+assert.equal(idea.children[0].textContent,'Indoor option');
+assert.equal(idea.children[2].children.length,2);
+vm.runInContext(`applyPresentation({trip_title:'Legacy trip'});`,context);
+assert.equal(elements.get('week-overview').children.length,0);
+assert.equal(elements.get('activity-ideas').children.length,0);
+console.log('PASS: seven-day overview, optional activity links, private attendance prompts, safe separate research links, legacy fallback');
+
