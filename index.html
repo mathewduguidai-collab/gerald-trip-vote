@@ -15,8 +15,8 @@ button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16
 button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
 .error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}.feedback-panel{margin-top:24px;padding:20px 0 5px;border-top:2px solid #e2eaf0;text-align:left}.feedback-panel h3{font-size:1.12rem;color:#163d59;margin:0 0 8px}.feedback-panel p{font-size:.92rem;color:#596779}.feedback-panel textarea{box-sizing:border-box;width:100%;min-height:125px;resize:vertical;border:1px solid #bac9d5;border-radius:10px;padding:13px;font:inherit;line-height:1.45;background:white;color:#1a2735}.feedback-panel textarea:focus{outline:2px solid #267ba4;outline-offset:1px}.feedback-panel button{margin-top:12px}.feedback-result{font-size:.91rem;margin:10px 0 3px;min-height:1.3em}.feedback-result.error{padding:10px;border-radius:6px}
 </style></head><body>
-<header><small>GERALD · TRIP PLANNING</small><h1>Vote on our Columbus weekend</h1>
-<p>Choose one option in each section, then tap <b>Submit all five votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
+<header><small>GERALD · TRIP PLANNING</small><h1>Trip preferences</h1>
+<p>Choose one option in each section, then tap <b>Submit all votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
 <div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
 <footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
 <script>
@@ -71,11 +71,12 @@ const eventUrls={
   48:'https://westsidemarket.org/location/hours/'
 };
 function placeLink(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
-function lookupLinks(optionId){
+function lookupLinks(optionId,choice={}){
   const links=el('div','','research');
-  const query=placeQueries[optionId];
+  const query=choice.maps_query||placeQueries[optionId];
   if(query)links.append(placeLink(optionId===27?'Neighborhood map ↗':'Google Maps ↗','https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query)));
-  if(eventUrls[optionId])links.append(placeLink(optionId===27?'Airbnb listing ↗':'Official details ↗',eventUrls[optionId]));
+  const official=choice.official_url||eventUrls[optionId];
+  if(official&&/^https:\/\//.test(official))links.append(placeLink(optionId===27?'Airbnb listing ↗':'Official details ↗',official));
   return links;
 }
 const el=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x};
@@ -93,6 +94,12 @@ function show(message,isError=false){
  status.textContent=message;status.className=isError?'notice error':'notice';
 }
 let ballots=[];
+let presentation={};
+function applyPresentation(data){
+ presentation=data.presentation||{};
+ document.querySelector('header h1').textContent=presentation.heading||data.trip_title||'Trip preferences';
+ document.querySelector('header p').textContent=presentation.intro||'Choose one option per section and Submit all votes. Links open separately. Nothing here books or pays for anything.';
+}
 const chosen=new Map();
 const committed=new Map();
 let submitting=false;
@@ -110,7 +117,8 @@ function updateProgress(){
 function renderBallots(){
  root.replaceChildren();
  tripNote.textContent='';
- if(ballots.some(b=>b.poll_id===3)){
+ if(presentation.trip_note){tripNote.className='trip-note';tripNote.textContent=presentation.trip_note;}
+ else if(ballots.some(b=>b.poll_id===3)){
   tripNote.className='trip-note';
   tripNote.textContent='Saturday is our GalaxyCon day: roughly 10 AM–4:30 PM, including lunch and whatever panels are published. Protect hotel downtime about 5–6:45 PM before choosing ONE evening plan. The detailed panel schedule is still pending.';
  }
@@ -141,7 +149,7 @@ function renderBallots(){
    }
    label.append(radio,details);
    const entry=el('div');entry.append(label);
-   const research=lookupLinks(choice.id);
+   const research=lookupLinks(choice.id,choice);
    if(research.childElementCount)entry.append(research);
    choices.append(entry);
   });
@@ -149,7 +157,7 @@ function renderBallots(){
  });
  const actions=el('section','','footer-actions');
  const progress=el('p','','vote-count');progress.id='progress';
- const submit=el('button','Submit all five votes','primary');submit.id='submit-all';
+ const submit=el('button','Submit all '+ballots.length+' votes','primary');submit.id='submit-all';
  submit.type='button';submit.addEventListener('click',submitAll);
  const note=el('p','One button saves your selections. You will see a confirmation when all answers are recorded.','hint');
  actions.append(progress,submit,note);root.append(actions);updateProgress();
@@ -157,25 +165,25 @@ function renderBallots(){
 }
 function makeFeedbackPanel(){
  const panel=el('section','','feedback-panel');
- panel.append(el('h3','Any other ideas or requests?'));
- panel.append(el('p','Optional: a must-see GalaxyCon guest, a lunch spot, or something you want us to work into the weekend. Gerald will review these alongside everyone’s votes before planning the final itinerary.'));
+ panel.append(el('h3',presentation.feedback_title||'Any other ideas or requests?'));
+ panel.append(el('p',presentation.feedback_help||'Optional: share an activity, meal or other request. Gerald will review these alongside everyone’s votes before planning the final itinerary.'));
  const field=document.createElement('textarea');
  field.id='additional-requests';
  field.rows=5;field.maxLength=2000;
- field.setAttribute('aria-label','Additional trip requests');
- field.placeholder='For example: I really want to see the Saturday cosplay contest, or let’s try a specific lunch place…';
+ field.setAttribute('aria-label',presentation.collect_attendance?'Arrival, departure, overnight dates and requests':'Additional trip requests');
+ field.placeholder=presentation.feedback_placeholder||'Share an activity, meal or other request…';
  field.value=savedFeedback;
  const feedbackStatus=el('div','','feedback-result');feedbackStatus.id='feedback-result';
  feedbackStatus.setAttribute('role','status');
  const count=el('small','Up to 2,000 characters. Leave blank if you have nothing to add.');
- const save=el('button',savedFeedback?'Update my request':'Save additional request','secondary');
+ const save=el('button',savedFeedback?'Update my answers':'Save my answers','secondary');
  save.type='button';save.id='save-feedback';
  if(!savedFeedback)save.disabled=true;
  const updateButton=()=>{
   const desired=field.value.trim();
   save.disabled=feedbackSaving||(desired===savedFeedback);
   save.textContent=!desired&&savedFeedback?'Remove my request':savedFeedback?'Update my request':'Save additional request';
-  count.textContent=field.value.length+' / 2,000 characters · Optional';
+  count.textContent=field.value.length+' / 2,000 characters'+(presentation.collect_attendance?' · Not sure yet is a valid answer':' · Optional');
  };
  field.addEventListener('input',updateButton);
  save.addEventListener('click',async()=>{
@@ -194,7 +202,7 @@ function makeFeedbackPanel(){
    feedbackStatus.textContent=desired?'Request saved. Gerald will consider it when building the final agenda.':'Your additional request has been removed.';
   }catch(e){
    feedbackStatus.className='feedback-result error';
-   feedbackStatus.textContent='Unable to confirm request ('+e.message+'). Your five votes are still saved. Refresh to check before trying again.';
+   feedbackStatus.textContent='Unable to confirm request ('+e.message+'). Your preference votes are still saved. Refresh to check before trying again.';
   }finally{
    feedbackSaving=false;field.disabled=false;updateButton();
   }
@@ -206,8 +214,8 @@ function showDone(){
  tripNote.replaceChildren();root.replaceChildren();
  const section=el('section','','card done');
  section.append(el('div','✓','check'));
- section.append(el('h2','All done. Your votes are saved!'));
- section.append(el('p','You have voted on all five decisions. You can safely close this browser tab.'));
+ section.append(el('h2',presentation.collect_attendance?'Preferences saved. Now add your dates below.':'All done. Your votes are saved!'));
+ section.append(el('p',presentation.collect_attendance?'Tell Gerald when you expect to arrive, leave and stay overnight. Not sure yet is fine. Save your answers separately; you can return and edit them.':'You have voted on all '+ballots.length+' decisions. You can safely close this browser tab.'));
  section.append(el('p','Matt will handle the rest of the planning. Apparently, as usual.','hint'));
  const summary=el('div','','summary');
  ballots.forEach(b=>{
@@ -287,6 +295,7 @@ async function load(){
  if(!token){show('This is a private voting link. Open the link sent to you by the trip organizer.',true);return}
  try{
   const data=await call('/ballot',{});
+  applyPresentation(data);
   ballots=data.ballots;
   savedFeedback=data.feedback_text??'';
   if(!ballots.length){show('No ballots are currently open. Check with the organizer if you expected one.');return}
