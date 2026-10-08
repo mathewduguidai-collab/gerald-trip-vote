@@ -13,10 +13,10 @@ p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px so
 .choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}.research{display:flex;flex-wrap:wrap;gap:14px;margin:-2px 0 15px 31px;font-size:.88rem}.research a{color:#15547d;font-weight:600;padding:4px 0}.trip-note{background:#e8f3fa;border-left:4px solid #236c99;padding:13px 16px;margin-bottom:18px;border-radius:8px;line-height:1.55}
 button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
 button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
-.error{background:#fce9e9;color:#862a2a}footer{font-size:.85rem;color:#687280}
+.error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}
 </style></head><body>
-<header><small>GERALD · TRIP PLANNING</small><h1>Help choose the trip</h1>
-<p>Vote on each decision separately. Use <b>Google Maps</b> and <b>Event details</b> to learn more. A vote never books or pays for anything.</p></header><aside id="trip-note"></aside>
+<header><small>GERALD · TRIP PLANNING</small><h1>Vote on our Columbus weekend</h1>
+<p>Choose one option in each section, then tap <b>Submit all five votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
 <div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
 <footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
 <script>
@@ -39,7 +39,9 @@ const placeQueries={
   21:'downtown Columbus Ohio bars',
   23:'National Veterans Memorial and Museum Columbus Ohio',
   24:'Greater Columbus Convention Center 400 N High St Columbus Ohio',
-  25:'brunch downtown Columbus Ohio'
+  25:'brunch downtown Columbus Ohio',
+  26:'Drury Plaza Hotel Columbus Downtown 88 E Nationwide Blvd Columbus Ohio',
+  27:'Goodale Park Short North Columbus Ohio'
 };
 const eventUrls={
   7:'https://www.marriott.com/en-us/hotels/cmhak-hotel-leveque-autograph-collection/overview/',
@@ -50,14 +52,16 @@ const eventUrls={
   18:'https://www.jeffruby.com/columbus',
   20:'https://galaxycon.com/pages/galaxycon-columbus-special-events',
   23:'https://nationalvmm.org/visit/tickets/',
-  24:'https://galaxycon.com/pages/galaxycon-columbus'
+  24:'https://galaxycon.com/pages/galaxycon-columbus',
+  26:'https://www.druryhotels.com/locations/columbus-oh/drury-plaza-hotel-columbus-downtown',
+  27:'https://www.airbnb.com/rooms/1286604937598390829'
 };
 function placeLink(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
 function lookupLinks(optionId){
   const links=el('div','','research');
   const query=placeQueries[optionId];
-  if(query)links.append(placeLink('Google Maps ↗','https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query)));
-  if(eventUrls[optionId])links.append(placeLink('Official details ↗',eventUrls[optionId]));
+  if(query)links.append(placeLink(optionId===27?'Neighborhood map ↗':'Google Maps ↗','https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query)));
+  if(eventUrls[optionId])links.append(placeLink(optionId===27?'Airbnb listing ↗':'Official details ↗',eventUrls[optionId]));
   return links;
 }
 const el=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x};
@@ -65,47 +69,142 @@ async function call(route,body){
  const r=await fetch(BASE+route,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
  const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');return data;
 }
-function show(message,isError=false){status.textContent=message;status.className=isError?'notice error':'notice'}
+function show(message,isError=false){
+ status.textContent=message;status.className=isError?'notice error':'notice';
+}
+let ballots=[];
+const chosen=new Map();
+const committed=new Map();
+let submitting=false;
+function countSelected(){return ballots.filter(b=>chosen.has(b.poll_id)).length}
+function updateProgress(){
+ const count=countSelected();
+ const progress=document.getElementById('progress');
+ if(progress)progress.textContent=count+' of '+ballots.length+' choices selected';
+ const submit=document.getElementById('submit-all');
+ if(submit)submit.textContent=count===ballots.length?'Submit all '+ballots.length+' votes':'Select all '+ballots.length+' choices to vote';
+}
+function renderBallots(){
+ root.replaceChildren();
+ tripNote.textContent='';
+ if(ballots.some(b=>b.poll_id===3)){
+  tripNote.className='trip-note';
+  tripNote.textContent='Saturday daytime is GalaxyCon: roughly 10 AM–3 PM (with lunch), followed by hotel downtime 3:30–6 PM. The Saturday choices are for the evening only.';
+ }
+ ballots.forEach((ballot,index)=>{
+  const card=el('section','','card');card.id='poll-'+ballot.poll_id;
+  const head=el('h2',(index+1)+'. '+ballot.title);
+  card.append(head);
+  const current=committed.get(ballot.poll_id);
+  if(current!==null&&current!==undefined)card.append(el('small','Previously saved. You may change this choice.','saved'));
+  const choices=el('div');
+  ballot.options.forEach(choice=>{
+   const label=el('label','','choice');
+   const radio=document.createElement('input');
+   radio.type='radio';
+   radio.name='vote-'+ballot.poll_id;
+   radio.value=String(choice.id);
+   radio.checked=chosen.get(ballot.poll_id)===choice.id;
+   radio.addEventListener('change',()=>{
+    chosen.set(ballot.poll_id,choice.id);
+    updateProgress();
+   });
+   const details=el('div');
+   details.append(el('strong',choice.title));
+   if(choice.description)details.append(el('span',choice.description));
+   if(choice.estimated_cost!==null){
+    const label=(choice.id===7||choice.id===8)?'Expired historical hotel + convention estimate: $':'Estimate, not a confirmed booking quote: $';
+    details.append(el('span',label+choice.estimated_cost));
+   }
+   label.append(radio,details);
+   const entry=el('div');entry.append(label);
+   const research=lookupLinks(choice.id);
+   if(research.childElementCount)entry.append(research);
+   choices.append(entry);
+  });
+  card.append(choices);root.append(card);
+ });
+ const actions=el('section','','footer-actions');
+ const progress=el('p','','vote-count');progress.id='progress';
+ const submit=el('button','Submit all five votes','primary');submit.id='submit-all';
+ submit.type='button';submit.addEventListener('click',submitAll);
+ const note=el('p','One button saves your selections. You will see a confirmation when all answers are recorded.','hint');
+ actions.append(progress,submit,note);root.append(actions);updateProgress();
+ show('Your answers are private to the organizer. Nothing is saved until you use the button below.');
+}
+function showDone(){
+ tripNote.replaceChildren();root.replaceChildren();
+ const section=el('section','','card done');
+ section.append(el('div','✓','check'));
+ section.append(el('h2','All done. Your votes are saved!'));
+ section.append(el('p','You have voted on all five decisions. You can safely close this browser tab.'));
+ section.append(el('p','Matt will handle the rest of the planning. Apparently, as usual.','hint'));
+ const summary=el('div','','summary');
+ ballots.forEach(b=>{
+  const choice=b.options.find(o=>o.id===committed.get(b.poll_id));
+  const item=el('div');
+  item.append(el('strong',b.title));
+  item.append(el('span',choice?choice.title:'Not recorded'));
+  summary.append(item);
+ });
+ section.append(summary);
+ const edit=el('button','Review or change my votes','secondary');
+ edit.type='button';
+ edit.addEventListener('click',()=>{renderBallots();window.scrollTo(0,0)});
+ section.append(edit);
+ root.append(section);
+ show('All '+ballots.length+' votes are saved.');
+ window.scrollTo(0,0);
+}
+async function submitAll(){
+ if(submitting)return;
+ const missing=ballots.find(b=>!chosen.has(b.poll_id));
+ if(missing){
+  show('Please choose an answer for all '+ballots.length+' questions before submitting.',true);
+  const card=document.getElementById('poll-'+missing.poll_id);
+  if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
+  return;
+ }
+ submitting=true;
+ const button=document.getElementById('submit-all');
+ if(button)button.disabled=true;
+ try{
+  const changed=ballots.filter(b=>chosen.get(b.poll_id)!==committed.get(b.poll_id));
+  for(let index=0;index<changed.length;index++){
+   const ballot=changed[index],selected=chosen.get(ballot.poll_id);
+   show('Saving '+(index+1)+' of '+changed.length+' updated choices…');
+   const result=await call('/vote',{poll_id:ballot.poll_id,option_id:selected,request_id:crypto.randomUUID()});
+   if(!result.accepted||result.option_id!==selected)throw Error('Vote confirmation did not match');
+   committed.set(ballot.poll_id,selected);
+  }
+  // Read back the authoritative database, including prior saved choices.
+  show('Verifying your selections…');
+  const latest=await call('/ballot',{});
+  if(latest.ballots.length!==ballots.length)throw Error('The list of open ballots changed');
+  const stillIncomplete=latest.ballots.some(b=>b.selected_option_id!==chosen.get(b.poll_id));
+  if(stillIncomplete)throw Error('Some selections were not confirmed');
+  ballots=latest.ballots;
+  ballots.forEach(b=>committed.set(b.poll_id,b.selected_option_id));
+  showDone();
+ }catch(e){
+  show('Not all votes could be confirmed: '+e.message+'. Your saved choices are kept. Refresh the page to check before trying again.',true);
+ }finally{
+  submitting=false;
+  if(button)button.disabled=false;
+ }
+}
 async function load(){
  if(!token){show('This is a private voting link. Open the link sent to you by the trip organizer.',true);return}
  try{
-  const data=await call('/ballot',{});root.replaceChildren();
-  if(!data.ballots.length){show('No ballots are currently open. The organizer may still be preparing the choices.');return}
-  show('Your choices are private to the trip organizer.');
-  tripNote.textContent='';
-  if(data.ballots.some(b=>b.poll_id===3)){
-    tripNote.className='trip-note';
-    tripNote.textContent='Saturday daytime is GalaxyCon: roughly 10 AM–3 PM with lunch, then 3:30–6 PM back at the hotel to recharge. The Saturday choices below are for the evening only.';
-  }
-  for(const ballot of data.ballots){
-   const card=el('section','','card');card.append(el('h2',ballot.title));
-   card.append(el('p','Pick one. Change it later if you like.','','hint'));
-   const form=el('div');let current=ballot.selected_option_id;
-   for(const choice of ballot.options){
-    const label=el('label','','choice'),radio=document.createElement('input');radio.type='radio';radio.name='vote-'+ballot.poll_id;radio.value=choice.id;radio.checked=current===choice.id;
-    const container=el('div');container.append(el('strong',choice.title));
-    if(choice.description)container.append(el('span',choice.description));
-    if(choice.estimated_cost!==null){
-      const priceLabel=(choice.id===7||choice.id===8)?'EXPIRED historical hotel + convention estimate: $':'Estimated (not a booking quote): $';
-      container.append(el('span',priceLabel+choice.estimated_cost));
-    }
-    label.append(radio,container);
-    const entry=el('div');entry.append(label);
-    const links=lookupLinks(choice.id);
-    if(links.childElementCount)entry.append(links);
-    form.append(entry)
-   }
-   card.append(form);const btn=el('button',current?'Update my vote':'Save my vote');
-   btn.addEventListener('click',async ()=>{
-    const selected=form.querySelector('input:checked');if(!selected){show('Choose one option before saving.',true);return}
-    btn.disabled=true;
-    try{const saved=await call('/vote',{poll_id:ballot.poll_id,option_id:Number(selected.value),request_id:crypto.randomUUID()});
-      if(saved.accepted){current=saved.option_id;btn.textContent='Update my vote';show('Vote saved. You can change your choice later.')}
-    }catch(e){show('Vote not confirmed ('+e.message+'). Refresh to check before trying again.',true)}
-    finally{btn.disabled=false}
-   });
-   card.append(btn);root.append(card)
-  }
+  const data=await call('/ballot',{});
+  ballots=data.ballots;
+  if(!ballots.length){show('No ballots are currently open. Check with the organizer if you expected one.');return}
+  ballots.forEach(b=>{
+   committed.set(b.poll_id,b.selected_option_id);
+   if(b.selected_option_id!==null)chosen.set(b.poll_id,b.selected_option_id);
+  });
+  if(ballots.every(b=>b.selected_option_id!==null))showDone();
+  else renderBallots();
  }catch(e){show('Could not load ballot: '+e.message,true)}
 }
 load();
