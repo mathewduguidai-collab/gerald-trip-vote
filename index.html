@@ -175,14 +175,14 @@ function makeFeedbackPanel(){
  field.value=savedFeedback;
  const feedbackStatus=el('div','','feedback-result');feedbackStatus.id='feedback-result';
  feedbackStatus.setAttribute('role','status');
- const count=el('small','Up to 2,000 characters. Leave blank if you have nothing to add.');
+ const count=el('small',presentation.collect_attendance?'Up to 2,000 characters. Not sure yet is a valid answer.':'Up to 2,000 characters. Leave blank if you have nothing to add.');
  const save=el('button',savedFeedback?'Update my answers':'Save my answers','secondary');
  save.type='button';save.id='save-feedback';
  if(!savedFeedback)save.disabled=true;
  const updateButton=()=>{
   const desired=field.value.trim();
   save.disabled=feedbackSaving||(desired===savedFeedback);
-  save.textContent=!desired&&savedFeedback?'Remove my request':savedFeedback?'Update my request':'Save additional request';
+  save.textContent=!desired&&savedFeedback?'Remove my request':savedFeedback?'Update my answers':'Save my answers';
   count.textContent=field.value.length+' / 2,000 characters'+(presentation.collect_attendance?' · Not sure yet is a valid answer':' · Optional');
  };
  field.addEventListener('input',updateButton);
@@ -199,7 +199,7 @@ function makeFeedbackPanel(){
    const verification=await call('/ballot',{});
    if((verification.feedback_text??'')!==desired)throw Error('Saved note could not be verified');
    savedFeedback=desired;
-   feedbackStatus.textContent=desired?'Request saved. Gerald will consider it when building the final agenda.':'Your additional request has been removed.';
+   feedbackStatus.textContent=desired?(presentation.collect_attendance?'Dates and requests saved. Gerald will use them when planning.':'Request saved. Gerald will consider it when building the final agenda.'):'Your answers have been removed.';
   }catch(e){
    feedbackStatus.className='feedback-result error';
    feedbackStatus.textContent='Unable to confirm request ('+e.message+'). Your preference votes are still saved. Refresh to check before trying again.';
