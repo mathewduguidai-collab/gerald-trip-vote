@@ -21,14 +21,21 @@ const polls=[
  {poll_id:9,title:'Saturday late',selected_option_id:null,options:[{id:20,title:'Cabaret',description:'Evening',estimated_cost:null},{id:21,title:'Drinks',description:'Bar',estimated_cost:null}]},
  {poll_id:10,title:'Sunday',selected_option_id:null,options:[{id:25,title:'Brunch',description:'Rest',estimated_cost:null},{id:23,title:'Museum',description:'Visit',estimated_cost:null}]}
 ];
-let saved=Object.create(null), writes=0, failAfter=-1, failAfterWrite=-1;
+let saved=Object.create(null), writes=0, failAfter=-1, failAfterWrite=-1, feedback='', feedbackWrites=0, feedbackFail=false;
 const context=await browser.newContext({viewport:{width:390,height:844}});
 const page=await context.newPage();
 await page.route('https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-trip-vote/**',async route=>{
  const path=new URL(route.request().url()).pathname;
  let reply={},status=200;
  if(path.endsWith('/ballot')){
-  reply={ballots:polls.map(p=>({...p,selected_option_id:saved[p.poll_id]??null}))};
+  reply={ballots:polls.map(p=>({...p,selected_option_id:saved[p.poll_id]??null})),feedback_text:feedback};
+ }else if(path.endsWith('/feedback')){
+  feedbackWrites++;
+  const body=JSON.parse(route.request().postData());
+  if(feedbackFail){status=503;reply={error:'simulated_feedback_failure'};}
+  else if(Object.keys(saved).length!==polls.length){status=409;reply={error:'finish_votes_before_feedback'};}
+  else if(typeof body.note!=='string'||body.note.length>2000){status=400;reply={error:'invalid_feedback'};}
+  else {feedback=body.note.trim();reply={saved:true,feedback_text:feedback};}
  }else if(path.endsWith('/vote')){
   writes++;
   if(writes===failAfter){status=503;reply={error:'temporary_test_failure'};}
@@ -63,6 +70,31 @@ try{
  assert.equal(writes,5,'five unique updates');
  assert.equal(Object.keys(saved).length,5,'five saved ballots');
  assert.equal(await page.getByText('You can safely close this browser tab.',{exact:false}).count(),1,'clear closing message');
+ // Qualitative feedback is OPTIONAL, separate from vote saves, and survives reload.
+ assert.equal(await page.locator('#additional-requests').count(),1,'post-vote feedback visible');
+ assert.equal(await page.locator('#save-feedback').isDisabled(),true,'blank optional note does not write');
+ await page.locator('#additional-requests').fill('Please find time for the Saturday cosplay panel and lunch at a good ramen shop.');
+ await page.locator('#save-feedback').click();
+ await page.getByText('Request saved. Gerald will consider it',{exact:false}).waitFor();
+ assert.equal(feedbackWrites,1,'one comment write');
+ assert.equal(feedback.includes('ramen'),true);
+ assert.equal(writes,5,'feedback never changes vote count');
+ await page.reload();
+ await page.getByRole('heading',{name:'All done. Your votes are saved!'}).waitFor();
+ assert.equal(await page.locator('#additional-requests').inputValue(),feedback,'persisted note shown on revisit');
+ await page.locator('#additional-requests').fill('New request: a specific GalaxyCon guest panel.');
+ feedbackFail=true;
+ await page.locator('#save-feedback').click();
+ await page.getByText('Unable to confirm request',{exact:false}).waitFor();
+ assert.equal(feedback.includes('ramen'),true,'failed request must not erase prior note');
+ feedbackFail=false;
+ await page.locator('#save-feedback').click();
+ await page.getByText('Request saved. Gerald will consider it',{exact:false}).waitFor();
+ assert.equal(feedback.startsWith('New request'),true,'edited note persisted');
+ await page.locator('#additional-requests').fill('');
+ await page.locator('#save-feedback').click();
+ await page.getByText('Your additional request has been removed.').waitFor();
+ assert.equal(feedback,'','cleared note is removed from mock DB');
  await page.reload();
  await page.getByRole('heading',{name:'All done. Your votes are saved!'}).waitFor();
  await page.getByRole('button',{name:'Review or change my votes'}).click();
@@ -106,7 +138,7 @@ try{
  assert.equal(writes,before+3,'retry sent just one remaining option');
  assert.equal(saved[10],23);
  // The initial blank state can be restored without writing to the real backend.
- console.log('PASS: mobile blank-five, missing choice, single submit, durable readback, saved summary, editing, no double-save, rejected request retry, partial-write recovery, server-committed lost response and linked lodging choices');
+ console.log('PASS: mobile blank-five, missing choice, single submit, durable readback, saved summary, vote editing, retry, partial-write recovery, lost response; optional request save/reload/edit/failure/remove and no vote mutation');
 }finally{
  await browser.close();
  await new Promise(done=>server.close(done));
