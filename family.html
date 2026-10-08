@@ -47,7 +47,7 @@ fieldset{border:0;padding:0;margin:0;min-width:0}
 .interest-entry .star[aria-pressed="true"]{background:#fff3d5;color:#7e4a00;border-color:#e0bd64}
 #favoriteCount{background:#f0f7f5;padding:9px 12px;border-radius:9px;position:sticky;top:0;z-index:2}
 #savedSummary{margin:18px 0;line-height:1.6}
-</style></head>
+.tripmeta{font-size:.85rem;color:#50646c;line-height:1.4;margin:7px 0 3px 34px}</style></head>
 <body><main>
 <header class="hero"><div class="eyebrow">Family Vacation Survey</div>
 <h1 id="headline">Let's plan a kick-ass vacation!</h1>
@@ -218,6 +218,7 @@ function drawInterests(){
   checkbox.addEventListener("change",()=>toggleInterest(a.code,checkbox.checked));
   const content=textNode("span");content.append(textNode("strong",a.title),textNode("span",a.description,"detail"));
   label.append(checkbox,content);entry.append(label);
+  showTravelFacts(entry,a.code);
   if(a.url){
    const info=urlLink(a.url,"Official information ↗");
    if(info){const l=textNode("p","","links");l.append(info);entry.append(l)}
