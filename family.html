@@ -134,7 +134,7 @@ if(fromFragment && /^[a-f0-9]{64}$/.test(fromFragment)){
  history.replaceState(null,"",location.pathname);
 }
 const token=sessionStorage.getItem("gerald_family_link_v1");
-let ballots=[],name="",saved=new Map(),selected=new Map(),saving=false,noteSaved="";
+
 function textNode(tag,text,cls){const e=document.createElement(tag);e.textContent=text||"";if(cls)e.className=cls;return e}
 async function call(endpoint,data){
  const res=await fetch(base+endpoint,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(data)});
