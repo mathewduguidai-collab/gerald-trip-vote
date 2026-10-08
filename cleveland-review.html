@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://splsniqrunknnwhccrxo.supabase.co; base-uri 'none'; form-action 'none'">
+<title>Gerald Trip Decisions</title>
+<style>
+:root{color-scheme:light;font:16px system-ui,-apple-system,sans-serif;background:#f5f6f8;color:#1a2735}
+body{max-width:650px;margin:auto;padding:20px 16px 70px}header{padding:8px 0 16px}
+h1{font-size:1.7rem;margin:6px 0}h2{font-size:1.16rem;margin:0 0 4px}
+p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px solid #dae0e5;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 10px #1d2b3910}
+.choice{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:10px 0;border:1px solid #dce0e4;border-radius:10px;cursor:pointer}
+.choice input{margin-top:4px;accent-color:#184b72;min-width:18px;height:18px}
+.choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}.research{display:flex;flex-wrap:wrap;gap:14px;margin:-2px 0 15px 31px;font-size:.88rem}.research a{color:#15547d;font-weight:600;padding:4px 0}.trip-note{background:#e8f3fa;border-left:4px solid #236c99;padding:13px 16px;margin-bottom:18px;border-radius:8px;line-height:1.55}
+button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
+button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
+.error{background:#fce9e9;color:#862a2a}.saved{color:#166534;font-weight:600}.footer-actions{padding:18px 4px 24px;position:relative}.primary{width:100%;min-height:52px;background:#175a86}.secondary{background:white;color:#175a86;border:1px solid #175a86}.done{text-align:center;padding:34px 24px}.done h2{font-size:1.75rem}.check{font-size:3rem;color:#187349}.vote-count{font-weight:600;color:#184b72;margin:10px 0}.summary{text-align:left;margin:20px 0}.summary div{padding:12px 0;border-bottom:1px solid #e4e9ed}.summary strong{display:block}.summary span{display:block;color:#526171;font-size:.9rem;margin-top:4px}footer{font-size:.85rem;color:#687280}.feedback-panel{margin-top:24px;padding:20px 0 5px;border-top:2px solid #e2eaf0;text-align:left}.feedback-panel h3{font-size:1.12rem;color:#163d59;margin:0 0 8px}.feedback-panel p{font-size:.92rem;color:#596779}.feedback-panel textarea{box-sizing:border-box;width:100%;min-height:125px;resize:vertical;border:1px solid #bac9d5;border-radius:10px;padding:13px;font:inherit;line-height:1.45;background:white;color:#1a2735}.feedback-panel textarea:focus{outline:2px solid #267ba4;outline-offset:1px}.feedback-panel button{margin-top:12px}.feedback-result{font-size:.91rem;margin:10px 0 3px;min-height:1.3em}.feedback-result.error{padding:10px;border-radius:6px}
+</style></head><body>
+<header><small>GERALD · PRIVATE OWNER REVIEW · NOVEMBER 20–22, 2026</small><h1>Review the Cleveland weekend</h1>
+<p><b>NOT SEND READY — owner-only rehearsal.</b> These choices are for review. Hockey seats and golf slots remain unverified; nothing is reserved and your friends have not been invited.</p><p>Choose one option in each section, then tap <b>Submit all five votes</b> at the bottom. Research links open separately and don't select anything. Nothing here books or pays for anything.</p></header><aside id="trip-note"></aside>
+<div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
+<footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
+<script>
+const BASE='https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-trip-vote';
+const params=new URLSearchParams(location.hash.slice(1));
+const supplied=params.get('token');
+if(supplied && /^[a-f0-9]{64}$/.test(supplied)){sessionStorage.setItem('gerald_cleveland_review_v1',supplied);history.replaceState(null,'',location.pathname)}
+const token=sessionStorage.getItem('gerald_cleveland_review_v1');
+const status=document.getElementById('status'), root=document.getElementById('ballots'), tripNote=document.getElementById('trip-note');
+const placeQueries={"39":"Metropolitan at The 9 2017 East 9th Cleveland Ohio","40":"Residence Inn Downtown 527 Prospect Avenue East Cleveland Ohio","41":"Marble Room 623 Euclid Avenue Cleveland Ohio","42":"Il Rione 1303 West 65th Cleveland Ohio","43":"Superelectric Pinball Parlor 6500 Detroit Cleveland Ohio","45":"Rocket Arena Cleveland Ohio","47":"Five Iron Golf 1101 Euclid Cleveland Ohio","48":"West Side Market 1979 West 25th Cleveland Ohio"};
+const eventUrls={"39":"https://www.marriott.com/en-us/hotels/cleak-metropolitan-at-the-9-autograph-collection/overview/","40":"https://www.marriott.com/en-us/hotels/cleri-residence-inn-cleveland-downtown/overview/","41":"https://www.exploretock.com/marbleroomsteaksandrawbar/search?date=2026-11-20&size=3&time=19%3A30","42":"https://www.ilrionepizzeria.com/info","43":"https://www.superelectric.tv/faq","45":"https://clevelandmonsters.com/schedule/home","47":"https://booking.fiveirongolf.com/select-experience?experience=simulator&location=cleveland-downtown","48":"https://westsidemarket.org/location/hours/"};
+function placeLink(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
+function lookupLinks(optionId){
+  const links=el('div','','research');
+  const query=placeQueries[optionId];
+  if(query)links.append(placeLink(optionId===27?'Neighborhood map ↗':'Google Maps ↗','https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query)));
+  if(eventUrls[optionId])links.append(placeLink(optionId===27?'Airbnb listing ↗':'Official details ↗',eventUrls[optionId]));
+  return links;
+}
+const el=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x};
+async function call(route,body){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),20000);
+ try{
+  const r=await fetch(BASE+route,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body),signal:controller.signal});
+  const data=await r.json();
+  if(!r.ok)throw Error(data.error||'Request failed');
+  if(route==='/ballot' && (data.ballots.length!==5 || data.ballots.some(b=>![20,21,22,23,24].includes(b.poll_id))))throw Error('This invitation is not for the Cleveland owner-review rehearsal. Please use the private Cleveland review link.');
+  return data;
+ }finally{clearTimeout(timeout)}
+}
+function show(message,isError=false){
+ status.textContent=message;status.className=isError?'notice error':'notice';
+}
+let ballots=[];
+const chosen=new Map();
+const committed=new Map();
+let submitting=false;
+let savedFeedback='';
+let feedbackSaving=false;
+const pendingRequestIds=new Map();
+function countSelected(){return ballots.filter(b=>chosen.has(b.poll_id)).length}
+function updateProgress(){
+ const count=countSelected();
+ const progress=document.getElementById('progress');
+ if(progress)progress.textContent=count+' of '+ballots.length+' choices selected';
+ const submit=document.getElementById('submit-all');
+ if(submit)submit.textContent=count===ballots.length?'Submit all '+ballots.length+' votes':'Select all '+ballots.length+' choices to vote';
+}
+function renderBallots(){
+ root.replaceChildren();
+ tripNote.textContent='';
+ tripNote.className='trip-note';
+ tripNote.textContent='Main event: Rock & Roll Hall of Fame, Saturday November 21, 10 AM–1 PM. Protect 3–4:45 PM hotel downtime. Hockey is a pending 7 PM add-on; Sunday golf is also a hold. The default Sunday plan is West Side Market, followed by departure by 2 PM ET.';
+ ballots.forEach((ballot,index)=>{
+  const card=el('section','','card');card.id='poll-'+ballot.poll_id;
+  const head=el('h2',(index+1)+'. '+ballot.title);
+  card.append(head);
+  const current=committed.get(ballot.poll_id);
+  if(current!==null&&current!==undefined)card.append(el('small','Previously saved. You may change this choice.','saved'));
+  const choices=el('div');
+  ballot.options.forEach(choice=>{
+   const label=el('label','','choice');
+   const radio=document.createElement('input');
+   radio.type='radio';
+   radio.name='vote-'+ballot.poll_id;
+   radio.value=String(choice.id);
+   radio.checked=chosen.get(ballot.poll_id)===choice.id;
+   radio.addEventListener('change',()=>{
+    chosen.set(ballot.poll_id,choice.id);
+    updateProgress();
+   });
+   const details=el('div');
+   details.append(el('strong',choice.title));
+   if(choice.description)details.append(el('span',choice.description));
+   if(choice.estimated_cost!==null){
+    const label=(choice.id===7||choice.id===8)?'Expired historical hotel + convention estimate: $':'Estimate, not a confirmed booking quote: $';
+    details.append(el('span',label+choice.estimated_cost));
+   }
+   label.append(radio,details);
+   const entry=el('div');entry.append(label);
+   const research=lookupLinks(choice.id);
+   if(research.childElementCount)entry.append(research);
+   choices.append(entry);
+  });
+  card.append(choices);root.append(card);
+ });
+ const actions=el('section','','footer-actions');
+ const progress=el('p','','vote-count');progress.id='progress';
+ const submit=el('button','Submit all five votes','primary');submit.id='submit-all';
+ submit.type='button';submit.addEventListener('click',submitAll);
+ const note=el('p','One button saves your selections. You will see a confirmation when all answers are recorded.','hint');
+ actions.append(progress,submit,note);root.append(actions);updateProgress();
+ show('Owner-review choices only. Nothing is saved until you use the button below.');
+}
+function makeFeedbackPanel(){
+ const panel=el('section','','feedback-panel');
+ panel.append(el('h3','Any other ideas or requests?'));
+ panel.append(el('p','Optional: tell Matt what you would change about the destination, hotel, music day, hockey, dinner or Sunday plan. This is an isolated owner-review rehearsal; the group has not been invited.'));
+ const field=document.createElement('textarea');
+ field.id='additional-requests';
+ field.rows=5;field.maxLength=2000;
+ field.setAttribute('aria-label','Additional trip requests');
+ field.placeholder='For example: skip hockey, try a different hotel, or prioritize indoor golf…';
+ field.value=savedFeedback;
+ const feedbackStatus=el('div','','feedback-result');feedbackStatus.id='feedback-result';
+ feedbackStatus.setAttribute('role','status');
+ const count=el('small','Up to 2,000 characters. Leave blank if you have nothing to add.');
+ const save=el('button',savedFeedback?'Update my request':'Save additional request','secondary');
+ save.type='button';save.id='save-feedback';
+ if(!savedFeedback)save.disabled=true;
+ const updateButton=()=>{
+  const desired=field.value.trim();
+  save.disabled=feedbackSaving||(desired===savedFeedback);
+  save.textContent=!desired&&savedFeedback?'Remove my request':savedFeedback?'Update my request':'Save additional request';
+  count.textContent=field.value.length+' / 2,000 characters · Optional';
+ };
+ field.addEventListener('input',updateButton);
+ save.addEventListener('click',async()=>{
+  if(feedbackSaving)return;
+  const desired=field.value.trim();
+  if(desired===savedFeedback)return;
+  feedbackSaving=true;save.disabled=true;field.disabled=true;
+  feedbackStatus.className='feedback-result';
+  feedbackStatus.textContent='Saving your request…';
+  try{
+   const result=await call('/feedback',{note:desired});
+   if(!result.saved||result.feedback_text!==desired)throw Error('Save was not confirmed');
+   const verification=await call('/ballot',{});
+   if((verification.feedback_text??'')!==desired)throw Error('Saved note could not be verified');
+   savedFeedback=desired;
+   feedbackStatus.textContent=desired?'Review request saved. Matt can use it when revising the draft.':'Your additional request has been removed.';
+  }catch(e){
+   feedbackStatus.className='feedback-result error';
+   feedbackStatus.textContent='Unable to confirm request ('+e.message+'). Your five votes are still saved. Refresh to check before trying again.';
+  }finally{
+   feedbackSaving=false;field.disabled=false;updateButton();
+  }
+ });
+ panel.append(field,count,save,feedbackStatus);
+ return panel;
+}
+function showDone(){
+ tripNote.replaceChildren();root.replaceChildren();
+ const section=el('section','','card done');
+ section.append(el('div','✓','check'));
+ section.append(el('h2','Your five review choices are saved!'));
+ section.append(el('p','This rehearsal saved all five decisions. No friends were notified and nothing was booked.'));
+ section.append(el('p','This is a review draft; pending inventory must clear before any friend-facing release.','hint'));
+ const summary=el('div','','summary');
+ ballots.forEach(b=>{
+  const choice=b.options.find(o=>o.id===committed.get(b.poll_id));
+  const item=el('div');
+  item.append(el('strong',b.title));
+  item.append(el('span',choice?choice.title:'Not recorded'));
+  summary.append(item);
+ });
+ section.append(summary);
+ const edit=el('button','Review or change my votes','secondary');
+ edit.type='button';
+ edit.addEventListener('click',()=>{renderBallots();window.scrollTo(0,0)});
+ section.append(edit);
+ section.append(makeFeedbackPanel());
+ root.append(section);
+ show('All '+ballots.length+' owner-review choices are saved.');
+ window.scrollTo(0,0);
+}
+async function submitAll(){
+ if(submitting)return;
+ const missing=ballots.find(b=>!chosen.has(b.poll_id));
+ if(missing){
+  show('Please choose an answer for all '+ballots.length+' questions before submitting.',true);
+  const card=document.getElementById('poll-'+missing.poll_id);
+  if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
+  return;
+ }
+ submitting=true;
+ const desired=new Map(chosen);
+ const button=document.getElementById('submit-all');
+ if(button)button.disabled=true;
+ const radios=[...root.querySelectorAll('input[type="radio"]')];
+ radios.forEach(input=>{input.disabled=true});
+ let failure=null;
+ try{
+  const changed=ballots.filter(b=>desired.get(b.poll_id)!==committed.get(b.poll_id));
+  for(let index=0;index<changed.length;index++){
+   const ballot=changed[index],selected=desired.get(ballot.poll_id);
+   show('Saving '+(index+1)+' of '+changed.length+' updated choices…');
+   const pending=pendingRequestIds.get(ballot.poll_id);
+   const requestId=pending?.selected===selected?pending.id:crypto.randomUUID();
+   pendingRequestIds.set(ballot.poll_id,{selected,id:requestId});
+   const result=await call('/vote',{poll_id:ballot.poll_id,option_id:selected,request_id:requestId});
+   if(!result.accepted||result.option_id!==selected)throw Error('Vote confirmation did not match');
+   committed.set(ballot.poll_id,selected);
+   pendingRequestIds.delete(ballot.poll_id);
+  }
+ }catch(e){failure=e}
+ // Always attempt authoritative readback: a timed-out vote may actually have saved.
+ try{
+  show('Verifying the database records…');
+  const latest=await call('/ballot',{});
+  if(latest.ballots.length!==ballots.length)throw Error('Ballot count changed');
+  ballots=latest.ballots;
+  savedFeedback=latest.feedback_text??'';
+  latest.ballots.forEach(b=>{
+   committed.set(b.poll_id,b.selected_option_id);
+   if(b.selected_option_id===desired.get(b.poll_id))pendingRequestIds.delete(b.poll_id);
+  });
+  if(latest.ballots.every(b=>b.selected_option_id===desired.get(b.poll_id))){
+   showDone();
+   submitting=false;
+   return;
+  }
+  const verified=latest.ballots.filter(b=>b.selected_option_id===desired.get(b.poll_id)).length;
+  failure=new Error(verified+' of '+latest.ballots.length+' choices are confirmed. Your other selections are still visible; try Submit again to finish.');
+ }catch(e){
+  if(!failure)failure=e;
+ }
+ show('Not all votes are verified: '+failure.message+' You can safely retry; already-saved selections will not be resubmitted.',true);
+ radios.forEach(input=>{input.disabled=false});
+ if(button)button.disabled=false;
+ submitting=false;
+}
+async function load(){
+ if(!token){show('This is a private voting link. Open the link sent to you by the trip organizer.',true);return}
+ try{
+  const data=await call('/ballot',{});
+  ballots=data.ballots;
+  savedFeedback=data.feedback_text??'';
+  if(!ballots.length){show('No ballots are currently open. Check with the organizer if you expected one.');return}
+  ballots.forEach(b=>{
+   committed.set(b.poll_id,b.selected_option_id);
+   if(b.selected_option_id!==null)chosen.set(b.poll_id,b.selected_option_id);
+  });
+  if(ballots.every(b=>b.selected_option_id!==null))showDone();
+  else renderBallots();
+ }catch(e){show('Could not load ballot: '+e.message,true)}
+}
+load();
+</script></body></html>
