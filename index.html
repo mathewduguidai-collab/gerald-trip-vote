@@ -10,13 +10,13 @@ h1{font-size:1.7rem;margin:6px 0}h2{font-size:1.16rem;margin:0 0 4px}
 p{line-height:1.5}small,.hint{color:#5a6472}.card{background:white;border:1px solid #dae0e5;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 10px #1d2b3910}
 .choice{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:10px 0;border:1px solid #dce0e4;border-radius:10px;cursor:pointer}
 .choice input{margin-top:4px;accent-color:#184b72;min-width:18px;height:18px}
-.choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}
+.choice strong{display:block}.choice span{display:block;color:#4e5864;font-size:.9rem;margin-top:4px}.choice{margin-bottom:2px}.research{font-size:.88rem;display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px 30px}.research a{color:#15547d;text-decoration:underline;font-weight:600;padding:5px 0}.trip-note{padding:12px 17px;margin:0 0 20px;border-left:4px solid #24759c;background:#e7f2f8;border-radius:8px;font-size:.92rem;line-height:1.5}
 button{background:#173e5d;color:white;border:0;border-radius:9px;padding:11px 16px;font-weight:600;font-size:1rem;cursor:pointer}
 button:disabled{opacity:.55}.notice{padding:10px;border-radius:8px;background:#e8f3e9;color:#244b2e}
 .error{background:#fce9e9;color:#862a2a}footer{font-size:.85rem;color:#687280}
 </style></head><body>
 <header><small>GERALD · TRIP PLANNING</small><h1>Help choose the trip</h1>
-<p>Vote on each decision separately. You can change your vote until its deadline. Nothing here books a hotel, spends money, or makes a reservation.</p></header>
+<p>Vote on each decision separately. Nothing here books a hotel or spends money. Tap <b>Google Maps</b> or <b>Event details</b> beside any place to research it before voting.</p></header><div id="trip-note"></div>
 <div id="status" role="status">Loading your invitation…</div><main id="ballots"></main>
 <footer>Only the invited person should use this link. If you received it unexpectedly, don't vote. Exact prices and availability may change before booking.</footer>
 <script>
@@ -25,7 +25,34 @@ const params=new URLSearchParams(location.hash.slice(1));
 const supplied=params.get('token');
 if(supplied && /^[a-f0-9]{64}$/.test(supplied)){sessionStorage.setItem('gerald_trip_invite_v1',supplied);history.replaceState(null,'',location.pathname)}
 const token=sessionStorage.getItem('gerald_trip_invite_v1');
-const status=document.getElementById('status'), root=document.getElementById('ballots');
+const status=document.getElementById('status'), root=document.getElementById('ballots'),tripNote=document.getElementById('trip-note');
+// Non-sensitive destination reference links; no invite identifiers, emails or private data here.
+// These are Google Maps SEARCH links (not claimed to be verified direct Place IDs).
+const GOOGLE_PLACES={
+  7:'Hotel LeVeque Columbus Ohio',
+  8:'Le Meridien Columbus The Joseph Columbus Ohio',
+  13:'Pins Mechanical Co 141 North 4th Street Columbus Ohio',
+  16:'Greater Columbus Convention Center 400 North High Street Columbus Ohio',
+  17:'Greater Columbus Convention Center 400 North High Street Columbus Ohio',
+  18:"Jeff Ruby's Steakhouse 89 East Nationwide Boulevard Columbus Ohio",
+  19:'restaurants downtown Columbus Ohio',
+  20:'Greater Columbus Convention Center 400 North High Street Columbus Ohio',
+  21:'cocktail bars downtown Columbus Ohio',
+  23:'National Veterans Memorial and Museum Columbus Ohio',
+  24:'Greater Columbus Convention Center 400 North High Street Columbus Ohio',
+  25:'brunch downtown Columbus Ohio'
+};
+const EVENT_LINKS={
+  16:'https://galaxycon.com/pages/galaxycon-columbus-special-events',
+  17:'https://galaxycon.com/pages/galaxycon-columbus-special-events',
+  20:'https://galaxycon.com/pages/galaxycon-columbus-special-events',
+  23:'https://nationalvmm.org/visit/tickets/',
+  24:'https://galaxycon.com/pages/galaxycon-columbus'
+};
+const mapsUrl=id=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(GOOGLE_PLACES[id]);
+function infoAnchor(title,url){
+ const a=el('a',title);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a
+}
 const el=(tag,text='',cls='')=>{const x=document.createElement(tag);x.textContent=text;if(cls)x.className=cls;return x};
 async function call(route,body){
  const r=await fetch(BASE+route,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
@@ -38,6 +65,11 @@ async function load(){
   const data=await call('/ballot',{});root.replaceChildren();
   if(!data.ballots.length){show('No ballots are currently open. The organizer may still be preparing the choices.');return}
   show('Your choices are private to the trip organizer.');
+  tripNote.replaceChildren();
+  if(data.ballots.some(b=>b.poll_id===3)){
+    tripNote.className='trip-note';
+    tripNote.textContent='Saturday daytime is GalaxyCon: arrive around 10 AM, explore through about 3 PM (with lunch), then enjoy a protected hotel break from 3:30–6 PM. The Saturday vote is for the EVENING only.';
+  }
   for(const ballot of data.ballots){
    const card=el('section','','card');card.append(el('h2',ballot.title));
    card.append(el('p',ballot.closes_at?'Closes '+new Date(ballot.closes_at).toLocaleString(): 'No deadline set yet','hint'));
@@ -46,8 +78,49 @@ async function load(){
     const label=el('label','','choice'),radio=document.createElement('input');radio.type='radio';radio.name='vote-'+ballot.poll_id;radio.value=choice.id;radio.checked=current===choice.id;
     const container=el('div');container.append(el('strong',choice.title));
     if(choice.description)container.append(el('span',choice.description));
-    if(choice.estimated_cost!==null)container.append(el('span','Estimated: $'+choice.estimated_cost+' (verify pricing before booking)'));
-    label.append(radio,container);form.append(label)
+    if(choice.estimated_cost!==null){
+      const caution=choice.id===7||choice.id===8?'Historical room + convention estimate (EXPIRED): 
+   }
+   card.append(form);const btn=el('button',current?'Update my vote':'Save my vote');
+   btn.addEventListener('click',async ()=>{
+    const selected=form.querySelector('input:checked');if(!selected){show('Choose one option before saving.',true);return}
+    btn.disabled=true;
+    try{const saved=await call('/vote',{poll_id:ballot.poll_id,option_id:Number(selected.value),request_id:crypto.randomUUID()});
+      if(saved.accepted){current=saved.option_id;btn.textContent='Update my vote';show('Vote saved. You can change it until the deadline.')}
+    }catch(e){show('Vote not confirmed ('+e.message+'). Refresh to check before trying again.',true)}
+    finally{btn.disabled=false}
+   });
+   card.append(btn);root.append(card)
+  }
+ }catch(e){show('Could not load ballot: '+e.message,true)}
+}
+load();
+</script></body></html>:'Estimated: 
+   }
+   card.append(form);const btn=el('button',current?'Update my vote':'Save my vote');
+   btn.addEventListener('click',async ()=>{
+    const selected=form.querySelector('input:checked');if(!selected){show('Choose one option before saving.',true);return}
+    btn.disabled=true;
+    try{const saved=await call('/vote',{poll_id:ballot.poll_id,option_id:Number(selected.value),request_id:crypto.randomUUID()});
+      if(saved.accepted){current=saved.option_id;btn.textContent='Update my vote';show('Vote saved. You can change it until the deadline.')}
+    }catch(e){show('Vote not confirmed ('+e.message+'). Refresh to check before trying again.',true)}
+    finally{btn.disabled=false}
+   });
+   card.append(btn);root.append(card)
+  }
+ }catch(e){show('Could not load ballot: '+e.message,true)}
+}
+load();
+</script></body></html>;
+      container.append(el('span',caution+choice.estimated_cost+' — verify pricing and availability before booking'));
+    }
+    label.append(radio,container);
+    const group=el('div');group.append(label);
+    const links=el('div','','research');
+    if(GOOGLE_PLACES[choice.id])links.append(infoAnchor('Google Maps ↗',mapsUrl(choice.id)));
+    if(EVENT_LINKS[choice.id])links.append(infoAnchor('Event details ↗',EVENT_LINKS[choice.id]));
+    if(links.childElementCount)group.append(links);
+    form.append(group)
    }
    card.append(form);const btn=el('button',current?'Update my vote':'Save my vote');
    btn.addEventListener('click',async ()=>{
