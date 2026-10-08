@@ -74,17 +74,17 @@ fieldset{border:0;padding:0;margin:0;min-width:0}
   <p id="who" class="small subtle"></p>
   <div class="card question" id="q-attendance">
    <h3>1. When will you be there?</h3>
-   <p class="small subtle">Come for the whole week or just part of it. The Airbnb is booked October 17–24.</p>
+   <p class="small subtle">The Airbnb is booked October 17–24. Let us know if you’ll be there all week, just part of it, or can’t make it.</p>
    <fieldset id="comingChoices" class="choices">
     <legend class="sr-only">Are you coming?</legend>
-    <label class="choice"><input type="radio" name="coming" value="yes"><span><strong>I'm coming!</strong></span></label>
-    <label class="choice"><input type="radio" name="coming" value="unsure"><span><strong>Not sure yet</strong></span></label>
+    <label class="choice"><input type="radio" name="coming" value="whole"><span><strong>I'm coming the whole time!</strong><span class="detail">October 17–24</span></span></label>
+    <label class="choice"><input type="radio" name="coming" value="part"><span><strong>I'll be there part of the time</strong><span class="detail">Pick my arrival and departure days</span></span></label>
     <label class="choice"><input type="radio" name="coming" value="no"><span><strong>I can't make it</strong></span></label>
    </fieldset>
    <div id="dateFields" hidden>
-    <label for="arrival">What day will you arrive?</label><select id="arrival"><option value="">Choose a day / not sure yet</option></select>
-    <label for="departure" style="margin-top:16px">What day will you leave?</label><select id="departure"><option value="">Choose a day / not sure yet</option></select>
-    <p class="small subtle" style="margin-top:10px">Cabin check-in is Saturday afternoon; checkout is Saturday morning, October 24. Pick tentative days if your plans aren't final.</p>
+    <label for="arrival">What day will you arrive?</label><select id="arrival"><option value="">Choose an arrival day</option></select>
+    <label for="departure" style="margin-top:16px">What day will you leave?</label><select id="departure"><option value="">Choose a departure day</option></select>
+    <p class="small subtle" style="margin-top:10px">Cabin check-in is Saturday afternoon; checkout is Saturday morning, October 24. You can choose a shorter stay, even if you are only visiting for a day.</p>
    </div>
   </div>
   <div id="extraQuestions">
@@ -143,7 +143,7 @@ async function call(endpoint,data){
  return obj;
 }
 function status(msg,bad=false){els("surveyStatus").textContent=msg;els("surveyStatus").className="status"+(bad?" notice error":"")}
-function urlLink(url,label){if(typeof url!=="string"||!/^https:\/\/(www\.frenchlick\.com|www\.wilstem\.com|www\.in\.gov)\//.test(url))return null;
+function urlLink(url,label){if(typeof url!=="string"||!/^https:\/\/(www\.frenchlick\.com|www\.wilstem\.com|www\.in\.gov|indianacaverns\.com|visitindiana\.in\.gov)\//.test(url))return null;
  const a=textNode("a",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a}
 function buildLanding(landing){
  els("headline").textContent=landing.headline||"Let's plan a kick-ass vacation!";
@@ -180,8 +180,14 @@ function setRadio(group,value){
 }
 function reflectAttendance(){
  const coming=selectedRadio("coming");
- els("dateFields").hidden=(coming==="no"||!coming);
- els("extraQuestions").hidden=(coming==="no");
+ els("dateFields").hidden=(coming!=="part");
+ els("extraQuestions").hidden=(coming==="no"||!coming);
+ if(coming==="whole"){
+  els("arrival").value="2026-10-17";
+  els("departure").value="2026-10-24";
+ } else if(coming==="no"){
+  els("arrival").value="";els("departure").value="";
+ }
 }
 function updateFavCounter(){
  els("favoriteCount").textContent=favoriteSet.size+" of 3 favorites starred";
@@ -208,6 +214,14 @@ function drawInterests(){
   checkbox.addEventListener("change",()=>toggleInterest(a.code,checkbox.checked));
   const content=textNode("span");content.append(textNode("strong",a.title),textNode("span",a.description,"detail"));
   label.append(checkbox,content);entry.append(label);
+  if(a.url){
+   const info=urlLink(a.url,"Official information ↗");
+   if(info){const l=textNode("p","","links");l.append(info);entry.append(l)}
+  }
+  if(a.secondary_url){
+   const info=urlLink(a.secondary_url,"Another discovery option ↗");
+   if(info){const l=textNode("p","","links");l.append(info);entry.append(l)}
+  }
   if(interestSet.has(a.code)){
    const star=textNode("button",favoriteSet.has(a.code)?"★ One of my top picks":"☆ Star as a top pick","star");
    star.type="button";star.setAttribute("aria-pressed",favoriteSet.has(a.code)?"true":"false");
@@ -226,7 +240,7 @@ function hydrate(result){
  els("arrival").value="";els("departure").value="";
  interestSet=new Set();favoriteSet=new Set();els("note").value="";
  if(result){
-  setRadio("coming",result.coming);
+  setRadio("coming",result.coming==="yes"?"whole":result.coming==="unsure"?"part":result.coming);
   setRadio("holiday",result.holiday_world);
   els("arrival").value=result.arrival_on||"";
   els("departure").value=result.departure_on||"";
@@ -241,8 +255,7 @@ function drawSummary(){
  const line=s=>root.append(textNode("p",s,"small"));
  if(!current)return;
  if(current.coming==="no"){line("Trip: Can't make it");return}
- if(current.coming==="unsure")line("Trip: Not sure yet");
- else line("Trip: Coming!");
+ line(current.coming==="whole"?"Trip: Coming for the whole week!":"Trip: Coming part of the week");
  if(current.arrival_on||current.departure_on){
   const nice=s=>s?dateLabels[Number(s.slice(-2))-17]||s:"TBD";
   line("Arriving: "+nice(current.arrival_on)+" · Leaving: "+nice(current.departure_on));
@@ -281,22 +294,18 @@ els("submitBtn").addEventListener("click",async()=>{
  const coming=selectedRadio("coming"),holiday=selectedRadio("holiday");
  if(!coming){status("Please say whether you're coming.",true);els("q-attendance").scrollIntoView({behavior:"smooth"});return}
  const arr=els("arrival").value||null,dep=els("departure").value||null;
- if(coming==="yes"&&(!arr||!dep)){
-  status("Please select your arrival and departure days, or choose 'Not sure yet'.",true);
+ if(coming==="part"&&(!arr||!dep)){
+  status("Please select your arrival and departure days for your partial stay.",true);
   els("q-attendance").scrollIntoView({behavior:"smooth"});return;
  }
- if(coming==="unsure"&&Boolean(arr)!==Boolean(dep)){
-  status("If you have tentative dates, enter both arrival and departure.",true);
-  els("q-attendance").scrollIntoView({behavior:"smooth"});return;
- }
- if(coming!=="no"&&arr&&dep&&arr>dep){
+  if(coming==="part"&&arr&&dep&&arr>dep){
   status("Your departure day must be on or after your arrival day.",true);
   els("q-attendance").scrollIntoView({behavior:"smooth"});return;
  }
  if(coming!=="no"&&!holiday){status("Please answer the Holiday World question.",true);els("q-holiday").scrollIntoView({behavior:"smooth"});return}
  const interested=coming==="no"?[]:[...interestSet];
  const favorites=coming==="no"?[]:[...favoriteSet];
- const payload={name,coming,arrival_on:coming==="no"?null:arr,departure_on:coming==="no"?null:dep,
+ const payload={name,coming,arrival_on:coming==="no"?null:(coming==="whole"?"2026-10-17":arr),departure_on:coming==="no"?null:(coming==="whole"?"2026-10-24":dep),
   holiday_world:coming==="no"?"no":holiday,interested,favorites,note:els("note").value.trim(),request_id:crypto.randomUUID()};
  saving=true;els("submitBtn").disabled=true;status("Saving and verifying your answers...");
  try{
