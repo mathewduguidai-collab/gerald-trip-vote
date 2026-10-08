@@ -205,6 +205,7 @@ async function submitAll(){
   });
   if(latest.ballots.every(b=>b.selected_option_id===desired.get(b.poll_id))){
    showDone();
+   submitting=false;
    return;
   }
   const verified=latest.ballots.filter(b=>b.selected_option_id===desired.get(b.poll_id)).length;
