@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://splsniqrunknnwhccrxo.supabase.co; img-src https://www.frenchlick.com; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#104a63"><title>Family Vacation Survey</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:16px;color:#153044;background:#f5f7f6;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;padding-bottom:68px}main{max-width:760px;margin:0 auto;padding:0 16px}
+h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2rem,8vw,3rem);letter-spacing:-.04em;line-height:1.08;margin-bottom:16px}
+h2{font-size:1.4rem;letter-spacing:-.025em}h3{font-size:1.08rem}
+p{line-height:1.55}.subtle{color:#546a76}.eyebrow{letter-spacing:.12em;font-size:.76rem;font-weight:800;text-transform:uppercase;color:#a4e6cf}
+.hero{background:linear-gradient(135deg,#104a63,#086c70);color:white;padding:42px 22px 33px;border-radius:0 0 26px 26px;margin:0 -16px 26px}
+.hero .subtitle{font-weight:600;font-size:1.02rem;color:#d3efe6}.hero p{color:#eef9f3}
+button{border:0;border-radius:13px;padding:16px 20px;font-weight:750;font-size:1.03rem;cursor:pointer;min-height:54px}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #ffbc6a;outline-offset:3px}
+.primary{background:#ffc978;color:#1e3544;width:100%;box-shadow:0 5px 12px #002b3620}
+.second{background:white;color:#165875;border:1px solid #a5c4d2}
+button:disabled{opacity:.55}.section{margin:26px 0}.card{border:1px solid #dfebe8;border-radius:16px;background:#fff;padding:18px;margin:12px 0;box-shadow:0 2px 6px #263f4210}
+.day{display:flex;gap:14px}.day .dot{flex:0 0 7px;background:#129888;border-radius:5px}.day h3{margin-bottom:5px}
+.idea img{width:100%;height:180px;object-fit:cover;border-radius:10px;margin:2px 0 14px}
+.idea p{margin:0 0 8px}a{color:#086b86;font-weight:700;text-underline-offset:3px}
+.notice{padding:14px 16px;border-radius:12px;background:#edf5f4;color:#174f60;margin:16px 0}
+.preview{background:#fff5df;color:#65420d}.error{background:#fff0ed;color:#832d26}
+#survey{border-top:2px solid #dfebe8;padding-top:32px;margin-top:26px}label{font-weight:700;display:block;margin-bottom:10px}
+input[type="text"],textarea{border:1px solid #aabdc4;border-radius:11px;font:inherit;padding:14px;width:100%;background:#fff;color:#203849}
+textarea{min-height:150px;resize:vertical}#identity button{margin-top:14px}
+.choice{display:flex;gap:12px;align-items:flex-start;border:1px solid #d5e1e3;border-radius:12px;padding:14px;margin:10px 0;cursor:pointer}
+.choice:has(input:checked){border-color:#087c78;background:#eaf7f4}
+.choice input{accent-color:#0b777a;width:22px;height:22px;flex:0 0 22px;margin:0}
+.choice strong{display:block;margin-bottom:5px}.choice .detail{display:block;font-size:.92rem;color:#526a75;line-height:1.45}
+.question h3{margin-bottom:16px}.question .links{font-size:.86rem;margin:12px 0 0 33px}
+#answers button{margin-top:8px}.status{margin:14px 0;font-weight:600}.small{font-size:.9rem}
+#done h2{color:#006a58}#done .card{border-color:#b8dccd}
+#footer{font-size:.82rem;color:#64717d;margin-top:35px}
+[hidden]{display:none!important}@media(min-width:680px){.hero{margin-top:16px;border-radius:24px;padding:45px 36px}.ideas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ideas .card{margin:0}.day{padding:20px}.section{margin:34px 0}}
+</style></head>
+<body><main>
+<header class="hero"><div class="eyebrow">Family Vacation Survey</div>
+<h1 id="headline">Let's plan a kick-ass vacation!</h1>
+<div class="subtitle" id="subtitle">Patoka Lake · October 17–24</div>
+<p id="welcome">We're picking everyone's favorite activities for our family trip.</p>
+<button class="primary" id="topTake" type="button">Take the family survey ↓</button>
+</header>
+<div id="notice" role="status" class="notice">Opening your private family link…</div>
+<section class="section" id="info" hidden>
+<h2>The plan so far</h2><div id="days"></div>
+<h2 style="margin-top:34px">Fun ideas for the week</h2><p class="subtle">These are ideas, not a packed schedule. Tell us what sounds best!</p><div class="ideas" id="ideas"></div>
+</section>
+<section id="survey" hidden>
+<h2>Pick your favorites</h2><p class="subtle">Five quick questions. It’s okay if you can only join part of the week.</p>
+<div class="card" id="identity">
+<label for="nameInput">First, what should we call you?</label>
+<input id="nameInput" type="text" autocomplete="given-name" placeholder="Your name (e.g. Mom, Kari, Sarah)" maxlength="50" />
+<p class="small subtle" style="margin:10px 0">Use a name no one else will choose. Use the same name to edit your answers later. No login or email needed.</p>
+<button class="primary" id="startBtn" type="button">Start my survey</button>
+</div>
+<div id="answers" hidden><p id="who" class="small subtle"></p><div id="polls"></div>
+<button class="primary" id="submitBtn" type="button">Submit my answers</button></div>
+<div id="done" hidden><div class="card"><h2>You're all set! ✓</h2><p>Your answers are saved. Matt will use everyone's favorites to put together the trip plan.</p>
+<button class="second" id="editBtn" type="button">Review or change my answers</button></div>
+<div class="card"><h3>Anything else we should know?</h3><p class="small subtle">Tell us when you're arriving and leaving, which nights you're staying, meal preferences or anything you want to do.</p>
+<textarea id="note" maxlength="2000" placeholder="Arriving:&#10;Leaving:&#10;Cabin nights:&#10;Food preferences:&#10;Other requests or ideas:"></textarea>
+<button class="primary" id="saveNote" type="button">Save my note</button><p id="noteStatus" class="status small" role="status"></p>
+</div></div></div><div id="surveyStatus" class="status" role="status"></div>
+</section>
+<footer id="footer">This link is for our family group. The link is shared, so names aren't independently verified. Voting doesn't purchase tickets or reserve activities.</footer>
+</main>
+<script>
+"use strict";
+const base="https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-family-survey";
+const els=id=>document.getElementById(id);
+const fromFragment=new URLSearchParams(location.hash.slice(1)).get("key");
+if(fromFragment && /^[a-f0-9]{64}$/.test(fromFragment)){
+ sessionStorage.setItem("gerald_family_link_v1",fromFragment);
+ history.replaceState(null,"",location.pathname);
+}
+const token=sessionStorage.getItem("gerald_family_link_v1");
+let ballots=[],name="",saved=new Map(),selected=new Map(),saving=false,noteSaved="";
+function textNode(tag,text,cls){const e=document.createElement(tag);e.textContent=text||"";if(cls)e.className=cls;return e}
+async function call(endpoint,data){
+ const res=await fetch(base+endpoint,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(data)});
+ let obj;try{obj=await res.json()}catch{throw Error("Service unavailable")}
+ if(!res.ok)throw Error((obj.error||"server_error").replaceAll("_"," "));
+ return obj;
+}
+function status(msg,bad=false){els("surveyStatus").textContent=msg;els("surveyStatus").className="status"+(bad?" notice error":"")}
+function urlLink(url,label){if(typeof url!=="string"||!/^https:\/\/(www\.frenchlick\.com|www\.wilstem\.com|www\.in\.gov)\//.test(url))return null;
+ const a=textNode("a",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a}
+function buildLanding(landing){
+ els("headline").textContent=landing.headline||"Let's plan a kick-ass vacation!";
+ els("subtitle").textContent=landing.subtitle||"Family vacation";
+ els("welcome").textContent=landing.welcome||"Pick your favorite activities and tell us when you're coming.";
+ const days=els("days"),ideas=els("ideas");days.replaceChildren();ideas.replaceChildren();
+ for(const item of (Array.isArray(landing.days)?landing.days:[]).slice(0,5)){
+  const card=textNode("article","","card day"),dot=textNode("div","","dot"),content=textNode("div");
+  content.append(textNode("h3",item.title),textNode("p",item.detail,"subtle"));card.append(dot,content);days.append(card);
+ }
+ for(const item of (Array.isArray(landing.ideas)?landing.ideas:[]).slice(0,8)){
+  const card=textNode("article","","card idea");
+  if(typeof item.image==="string"&&item.image.startsWith("https://www.frenchlick.com/files/")){
+   const pic=document.createElement("img");pic.src=item.image;pic.loading="lazy";pic.alt=item.title||"Vacation activity";pic.referrerPolicy="no-referrer";card.append(pic);
+  }
+  card.append(textNode("h3",item.title),textNode("p",item.detail,"subtle"));
+  const link=urlLink(item.url,"See details ↗");if(link)card.append(link);ideas.append(card);
+ }
+ els("info").hidden=false;els("survey").hidden=false;
+}
+function renderPolls(){
+ const container=els("polls");container.replaceChildren();
+ ballots.forEach((b,i)=>{
+  const article=textNode("article","","card question");article.id="q"+b.poll_id;
+  article.append(textNode("h3",(i+1)+". "+b.title));
+  b.options.forEach(o=>{
+   const label=textNode("label","","choice"),radio=document.createElement("input");
+   radio.type="radio";radio.name="vote"+b.poll_id;radio.value=o.id;radio.checked=selected.get(b.poll_id)===o.id;
+   radio.addEventListener("change",()=>selected.set(b.poll_id,o.id));
+   const content=textNode("span");content.append(textNode("strong",o.title));
+   if(o.description)content.append(textNode("span",o.description,"detail"));
+   label.append(radio,content);article.append(label);
+   const link=urlLink(o.official_url,"Official details ↗");
+   if(link){const line=textNode("p","","links");line.append(link);article.append(line)}
+  });
+  container.append(article);
+ });
+}
+function showDone(){
+ els("answers").hidden=true;els("done").hidden=false;els("note").value=noteSaved;els("noteStatus").textContent="";
+ status("All "+ballots.length+" answers are saved.");
+ els("done").scrollIntoView({behavior:"smooth",block:"start"});
+}
+els("topTake").addEventListener("click",()=>els("survey").scrollIntoView({behavior:"smooth",block:"start"}));
+els("startBtn").addEventListener("click",async()=>{
+ name=els("nameInput").value.trim().replace(/\s+/g," ");
+ if(name.length<2||name.length>50){status("Please enter a name of 2–50 characters.",true);return}
+ els("startBtn").disabled=true;status("Loading your questions…");
+ try{
+  const data=await call("/ballot",{name});
+  name=data.name;localStorage.setItem("gerald_family_name_v1",name);
+  ballots=data.ballots;noteSaved=data.note||"";selected.clear();saved.clear();
+  if(ballots.length!==5)throw Error("The five questions are not ready yet");
+  ballots.forEach(b=>{saved.set(b.poll_id,b.selected_option_id);if(b.selected_option_id!==null)selected.set(b.poll_id,b.selected_option_id)});
+  els("identity").hidden=true;els("who").textContent="Answering as "+name+". Need another name? Reopen the group link in a private tab.";
+  renderPolls();
+  if(ballots.every(b=>b.selected_option_id!==null))showDone();
+  else {els("answers").hidden=false;status("Choose one answer in each section.");els("answers").scrollIntoView({behavior:"smooth",block:"start"})}
+ }catch(e){status("Couldn't load your survey: "+e.message,true)}finally{els("startBtn").disabled=false}
+});
+els("submitBtn").addEventListener("click",async()=>{
+ if(saving)return;
+ const missing=ballots.find(b=>!selected.has(b.poll_id));
+ if(missing){status("Choose one answer for all five questions.",true);els("q"+missing.poll_id).scrollIntoView({behavior:"smooth"});return}
+ saving=true;els("submitBtn").disabled=true;status("Saving your answers…");
+ try{
+  for(const b of ballots){
+   const choice=selected.get(b.poll_id);
+   if(choice===saved.get(b.poll_id))continue;
+   await call("/vote",{name,poll_id:b.poll_id,option_id:choice,request_id:crypto.randomUUID()});
+   saved.set(b.poll_id,choice);
+  }
+  const check=await call("/ballot",{name});
+  if(check.ballots.length!==5||check.ballots.some(b=>b.selected_option_id!==selected.get(b.poll_id)))throw Error("Not all five answers were verified. Try again.");
+  ballots=check.ballots;noteSaved=check.note||"";showDone();
+ }catch(e){status("Please check and retry: "+e.message,true)}
+ finally{saving=false;els("submitBtn").disabled=false}
+});
+els("editBtn").addEventListener("click",()=>{
+ els("done").hidden=true;els("answers").hidden=false;renderPolls();status("You can change any answer, then submit again.");
+ els("answers").scrollIntoView({behavior:"smooth",block:"start"});
+});
+els("saveNote").addEventListener("click",async()=>{
+ const desired=els("note").value.trim();els("saveNote").disabled=true;els("noteStatus").textContent="Saving…";
+ try{
+  const result=await call("/feedback",{name,note:desired});
+  if(!result.saved||result.note!==desired)throw Error("Save not confirmed");
+  const verify=await call("/ballot",{name});
+  if(verify.note!==desired)throw Error("Note verification failed");
+  noteSaved=desired;els("noteStatus").textContent="Your note is saved. Thanks!";
+ }catch(e){els("noteStatus").textContent="Could not verify the save: "+e.message}
+ finally{els("saveNote").disabled=false}
+});
+(async()=>{
+ if(!token){els("notice").textContent="Open the family link from the group text to view the trip and survey.";els("notice").className="notice error";els("topTake").disabled=true;return}
+ try{
+  const data=await call("/overview",{});
+  buildLanding(data.landing||{});
+  els("nameInput").value=localStorage.getItem("gerald_family_name_v1")||"";
+  if(data.review_only){els("notice").className="notice preview";els("notice").textContent="Organizer preview: this link is ready for testing but has not been shared with family."}
+  else els("notice").hidden=true;
+ }catch(e){els("notice").className="notice error";els("notice").textContent="Could not open this survey: "+e.message;els("topTake").disabled=true}
+})();
+</script></body></html>
