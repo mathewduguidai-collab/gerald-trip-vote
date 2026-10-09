@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { shows: [], filter: "all", city: "all", tickets: "all", q: "", sort: "score", visible: 20 };
+  const state = { shows: [], filter: "all", city: "all", tickets: "all", horizon: "730", q: "", sort: "score", visible: 20 };
   const norm = text => String(text ?? "").toLocaleLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"");
   const e = value => String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const url = raw => {try {const u=new URL(String(raw));return u.protocol==="https:" ? u.href : "";}catch{return "";}};
@@ -10,6 +10,8 @@
   const field = (s,name) => s?.[name] ?? null;
   const dateLabel = raw => {
     if(!raw)return "Date to be confirmed";
+    const dayOnly=String(raw).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(dayOnly){const d=new Date(Number(dayOnly[1]),Number(dayOnly[2])-1,Number(dayOnly[3]),12);return d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})+" · Time TBA";}
     const match=String(raw).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
     if(!match)return String(raw);
     const y=Number(match[1]),m=Number(match[2]),d=Number(match[3]),h=Number(match[4]),min=Number(match[5]);
@@ -48,6 +50,7 @@
   }
   function card(s){
     const badges=[];
+    if(s.is_new)badges.push('<span class="badge pair">NEW discovery</span>');
     if(s.curated_count>0)badges.push('<span class="badge favorite">★ '+s.curated_count+' favorite'+(s.curated_count===1?'':'s')+'</span>');
     if(s.matched_count>1)badges.push('<span class="badge pair">'+s.matched_count+' matching artists</span>');
     if(s.top100_count>0)badges.push('<span class="badge">Top 100 × '+s.top100_count+'</span>');
@@ -73,6 +76,8 @@
       if(state.filter==="multi"&&s.matched_count<2)return false;
       if(state.filter==="top100"&&!s.top100_count)return false;
       if(state.city!=="all"&&s.city!==state.city)return false;
+      const limitDate=new Date(Date.now()+Number(state.horizon)*86400000).toISOString().slice(0,10);
+      if(String(s.date||"").slice(0,10)>limitDate)return false;
       if(state.tickets==="not-sold-out"&&s.ticket_status==="SOLD_OUT")return false;
       if(state.tickets==="sold-out"&&s.ticket_status!=="SOLD_OUT")return false;
       if(state.q){
@@ -109,8 +114,8 @@
   }
   function update(reset=true){if(reset)state.visible=20;render();}
   function reset(){
-    state.filter="all";state.city="all";state.tickets="all";state.q="";state.sort="score";
-    $("search").value="";$("city").value="all";$("tickets").value="all";$("sort").value="score";
+    state.filter="all";state.city="all";state.tickets="all";state.horizon="730";state.q="";state.sort="score";
+    $("search").value="";$("city").value="all";$("tickets").value="all";$("horizon").value="730";$("sort").value="score";
     document.querySelectorAll(".chip").forEach(b=>{b.classList.toggle("active",b.dataset.filter==="all");b.setAttribute("aria-pressed",String(b.dataset.filter==="all"));});
     update();
   }
@@ -119,6 +124,7 @@
     $("sort").addEventListener("change",ev=>{state.sort=ev.target.value;update();});
     $("city").addEventListener("change",ev=>{state.city=ev.target.value;update();});
     $("tickets").addEventListener("change",ev=>{state.tickets=ev.target.value;update();});
+    $("horizon").addEventListener("change",ev=>{state.horizon=ev.target.value;update();});
     document.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
       state.filter=b.dataset.filter;
       document.querySelectorAll(".chip").forEach(c=>{const active=c===b;c.classList.toggle("active",active);c.setAttribute("aria-pressed",String(active));});
@@ -127,7 +133,17 @@
     $("reset").addEventListener("click",reset);
     $("more").addEventListener("click",()=>{state.visible+=20;render();});
   }
+  function installHorizon(){
+    const label=document.createElement("label"); label.textContent="Horizon ";
+    const sel=document.createElement("select");sel.id="horizon";
+    [["30","30 days"],["183","6 months"],["365","1 year"],["730","2 years"]].forEach(([value,title])=>{
+      const option=document.createElement("option");option.value=value;option.textContent=title;
+      if(value==="730")option.selected=true;sel.appendChild(option);
+    });
+    label.appendChild(sel);$("tickets").closest("label").before(label);
+  }
   async function init(){
+    installHorizon();
     wire();
     try{
       const response=await fetch("./data.json",{cache:"no-store"});
