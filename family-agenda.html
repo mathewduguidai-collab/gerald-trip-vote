@@ -20,43 +20,40 @@ main{padding-top:24px}section{margin:30px 0}.lead{color:var(--muted);margin-bott
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 .route-scroll{overflow-x:auto;border:1px solid var(--line);background:white;border-radius:15px;margin:13px 0}.route-table{border-collapse:collapse;width:100%;min-width:530px;font-size:.88rem;line-height:1.42}.route-table th{text-align:left;color:#34584e;background:#e9f1e9;font-size:.75rem;letter-spacing:.02em;padding:13px 14px}.route-table td{padding:13px 14px;border-top:1px solid #e7eee8;vertical-align:top}.route-table td small{display:block;font-size:.75rem;color:#74847a;margin-top:3px}.route-table td b{color:#154d42}.route-table tr:nth-child(even){background:#fbfdfa}
+
+/* Agenda first, and readable single-column cards on narrow phones */
+.first-section{margin-top:0}.page-kicker{font-size:.74rem;letter-spacing:.09em;font-weight:800;color:#567568;margin:5px 0 7px}
+.agenda-title{font-size:clamp(1.6rem,6vw,2.1rem);letter-spacing:-.04em;line-height:1.15;margin:0 0 7px;color:#173f3e}
+.agenda-note{margin:0 0 16px;padding:9px 12px;border-left:3px solid #d7a459;background:#fff9ea;border-radius:7px}
+.route-table{table-layout:fixed;min-width:0;width:100%}.route-table th,.route-table td{overflow-wrap:break-word;word-break:normal}
+@media(max-width:760px){
+body{padding-bottom:40px}
+main.shell{padding:0 14px}
+main{padding-top:14px}
+section{margin:22px 0}
+.first-section{margin-top:0}
+.route-scroll{overflow:visible;border:0;background:none;border-radius:0}
+.route-table{display:block;width:100%;min-width:0;font-size:.94rem;table-layout:auto}
+.route-table thead{display:none}
+.route-table tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;width:100%}
+.route-table tr,.route-table tr:nth-child(even){display:block;min-width:0;width:100%;padding:12px 14px;background:white;border:1px solid var(--line);border-radius:13px}
+.route-table td{display:block;padding:4px 0;border:none;width:100%;overflow-wrap:anywhere}
+.route-table td:first-child{font-weight:750;color:#164f45}
+.route-table td:nth-child(2)::before{content:"Drive: ";font-weight:750;color:#62766d}
+.arrival-table td:nth-child(3)::before{content:"Leave: ";font-weight:750;color:#62766d}
+.legs-table td:nth-child(3)::before{content:"Plan: ";font-weight:750;color:#62766d}
+.route-table td small{font-weight:400;margin-top:1px}
+.route-table td b{font-weight:800}
+.dayintro p{overflow-wrap:anywhere}
+.food,.daybody,.delivery,.subcard{min-width:0;overflow-wrap:anywhere}
+}
 </style>
 </head>
 <body>
-<header class="hero"><div class="shell">
-<div class="eyebrow">The Duguid family • October 17–24, 2026</div>
-<h1>One cabin.<br>One good week.</h1>
-<p>Patoka Lake, Holiday World, Louisville, French Lick, antiquing, fishing, and plenty of time to do absolutely nothing.</p>
-<div class="tags"><span class="tag">🌲 Patoka Lake</span><span class="tag">🕥 Relaxed mornings</span><span class="tag">🎢 Holiday World</span><span class="tag">🎣 Flexible afternoons</span></div>
-<a class="btn" href="#agenda">See the week ↓</a>
-</div></header>
-<nav><div class="shell tabs"><a href="#arrival">Arrival drives</a><a href="#agenda">The itinerary</a><a href="#routes">Driving times</a><a href="#louisville-dinner">Louisville dinner</a><a href="#food">Food & delivery</a><a href="#feedback">Give feedback</a></div></nav>
 <main class="shell">
-<section><h2>Here's the idea</h2><p class="lead">A relaxed draft built around everyone's survey responses. Split into smaller groups whenever you like; lake days depend on weather.</p>
-<div class="summary">
-<article><small>CHECK IN</small><strong>Sat, Oct 17<br>After 4 PM ET</strong></article>
-<article><small>CHECK OUT</small><strong>Sat, Oct 24<br>By 10 AM ET</strong></article>
-<article><small>GROUP START</small><strong>10:30 AM or later</strong><small>Most days; sleep in!</small></article>
-<article><small>SUNDAY EXCEPTION</small><strong>10 AM departure</strong><small>Holiday World group only</small></article>
-</div>
-<p class="notice"><b>A few things are still tentative:</b> Tuesday’s dinner restaurant, water levels for fossil viewing, and who returns Thursday. No new attraction or dining reservations are implied by this page.</p>
-</section>
-<section id="arrival"><h2>Saturday arrivals · October 17</h2>
-<p class="lead">Cabin check-in is <b>4:00 PM Eastern</b>. Suggested departures below include driving allowance; they are estimates, not traffic forecasts.</p>
-<div class="route-scroll"><table class="route-table"><thead><tr><th>Starting area</th><th>Drive allowance</th><th>Suggested leave time</th></tr></thead><tbody>
-<tr><td><b>Fishers</b><small>Your household + sister</small></td><td>2 hr 45–3 hr 15</td><td><b>12:45 PM</b></td></tr>
-<tr><td><b>Huntington</b><small>Parents / boat in tow</small></td><td>4–4½ hr; add restroom/boat margin</td><td><b>11:00 AM</b></td></tr>
-<tr><td><b>Louisville</b><small>Colleen + Jack</small></td><td>1 hr 20–1 hr 45</td><td><b>2:15 PM</b></td></tr>
-</tbody></table></div>
-<p class="compact">Times are estimates from town centers. Use the privately shared Airbnb address for final navigation.</p>
-<div class="links">
-<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Fishers%2C+Indiana&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Fishers → Patoka area ↗</a>
-<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Huntington%2C+Indiana&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Huntington → Patoka area ↗</a>
-<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Louisville%2C+Kentucky&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Louisville → Patoka area ↗</a>
-</div></section>
-<section id="agenda"><h2>The week, day by day</h2><p class="lead">Tap a day for details. Times are <b>Eastern</b> (Holiday World uses Central).</p>
+<section id="agenda" class="first-section"><p class="page-kicker">DUGUID FAMILY · OCTOBER 17–24, 2026</p><h1 class="agenda-title">The itinerary</h1><p class="lead">Tap a day to expand. All times Eastern; Holiday World uses Central.</p>
 <div class="plan">
-<article class="day"><div class="dayhead"><div class="datebox"><small>Sat</small><b>17</b></div><div class="dayintro"><h3>Get settled</h3><p>Check in after 4 PM · cabin hangout</p></div><span class="pill planned">Easy</span></div><details><summary>Details and food options</summary><div class="daybody"><p>Check in after 4 PM. Unload, relax, enjoy the hot tub or games, and eat when everyone is ready. Suggested departure times are above.</p><p><b>Food:</b> Grab local takeout or eat out. See food options below.</p></div></details></article>
+<article class="day"><div class="dayhead"><div class="datebox"><small>Sat</small><b>17</b></div><div class="dayintro"><h3>Get settled</h3><p>Check in after 4 PM · cabin hangout</p></div><span class="pill planned">Easy</span></div><details><summary>Details and food options</summary><div class="daybody"><p>Check in after 4 PM. Unload, relax, enjoy the hot tub or games, and eat when everyone is ready. Suggested departure times are below.</p><p><b>Food:</b> Grab local takeout or eat out. See food options below.</p></div></details></article>
 <article class="day"><div class="dayhead"><div class="datebox"><small>Sun</small><b>18</b></div><div class="dayintro"><h3>Two ways to spend Sunday</h3><p>Holiday World, or a free-choice day for the grandparents</p></div><span class="pill planned">Split</span></div><details><summary>See both plans</summary><div class="daybody"><div class="split"><div class="subcard"><h4>🎢 Holiday World crew</h4><p><span class="time">10:00 AM ET:</span> Leave cabin. Aim for the gates before the <b>noon ET / 11 AM CT</b> opening. Rides, Halloween attractions and lunch; return when ready.</p><div class="links"><a target="_blank" rel="noopener" href="https://www.holidayworld.com/">Park information ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Holiday+World+Santa+Claus+Indiana">Map ↗</a></div></div><div class="subcard"><h4>🎣 Grandparents' choice: slots, fishing, or relax</h4><p>Sleep in, play slots at <b>French Lick Casino</b>, fish, relax or do anything else they feel like.</p><div class="links"><a target="_blank" rel="noopener" href="https://www.frenchlick.com/gaming.htm">Casino details ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=French+Lick+Casino+Indiana">Map ↗</a></div></div></div><p class="compact">Casino is 21+. Both groups set their own pace.</p></div></details></article>
 <article class="day"><div class="dayhead"><div class="datebox"><small>Mon</small><b>19</b></div><div class="dayintro"><h3>West Baden & French Lick</h3><p>Historic dome · gardens · optional slots and bowling</p></div></div><details><summary>How Monday works</summary><div class="daybody"><p><span class="time">10:30 AM:</span> Leave cabin for the West Baden dome, gardens and lunch.</p><p><b>Split up if wanted:</b> Slots for interested adults; shops, bowling or tile painting for others. <b>Short walks and seated breaks</b>, with the accessible resort shuttle available. Main antiquing day is Thursday.</p><div class="links"><a target="_blank" rel="noopener" href="https://www.frenchlick.com/">Resort details ↗</a><a target="_blank" rel="noopener" href="https://www.frenchlick.com/events-calendar.aspx?date=10%2F18%2F2026&amp;display=week">Oct 19 activities ↗</a><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&amp;query=West+Baden+Springs+Hotel">Map ↗</a></div></div></details></article>
 <article class="day"><div class="dayhead"><div class="datebox"><small>Tue</small><b>20</b></div><div class="dayintro"><h3>Fossils → visit Colleen → dinner</h3><p>Falls of the Ohio first · Pumpy &amp; Pepper · dinner together</p></div><span class="pill planned">Family visit</span></div><details><summary>View Tuesday's plans</summary><div class="daybody"><p><span class="time">10:30 AM ET:</span> Leave the cabin.</p>
@@ -73,9 +70,23 @@ main{padding-top:24px}section{margin:30px 0}.lead{color:var(--muted);margin-bott
 <article class="day"><div class="dayhead"><div class="datebox"><small>Fri</small><b>23</b></div><div class="dayintro"><h3>Last full day — keep it loose</h3><p>Fishing · antiquing raincheck · family time</p></div></div><details><summary>Ideas for the last day</summary><div class="daybody"><p>Fish, finish any missed activities or relax. Load boat and kayak before dark; final family evening.</p><p>Restaurant, takeout or delivery if available.</p></div></details></article>
 <article class="day"><div class="dayhead"><div class="datebox"><small>Sat</small><b>24</b></div><div class="dayintro"><h3>Pack up and head home</h3><p>Cabin checkout by 10 AM Eastern</p></div></div><details><summary>Departure details</summary><div class="daybody"><p>Breakfast, pack, clean and check out <b>by 10 AM</b>.</p></div></details></article>
 </div></section>
+<p class="compact agenda-note"><b>Still tentative:</b> Tuesday dinner, river conditions for fossils, and Thursday arrivals. No activities or dining booked.</p>
+<section id="arrival"><h2>Saturday arrivals · October 17</h2>
+<p class="lead">Cabin check-in is <b>4:00 PM Eastern</b>. Suggested departures below include driving allowance; they are estimates, not traffic forecasts.</p>
+<div class="route-scroll"><table class="route-table arrival-table"><thead><tr><th>Starting area</th><th>Drive allowance</th><th>Suggested leave time</th></tr></thead><tbody>
+<tr><td><b>Fishers</b><small>Your household + sister</small></td><td>2 hr 45–3 hr 15</td><td><b>12:45 PM</b></td></tr>
+<tr><td><b>Huntington</b><small>Parents / boat in tow</small></td><td>4–4½ hr; add restroom/boat margin</td><td><b>11:00 AM</b></td></tr>
+<tr><td><b>Louisville</b><small>Colleen + Jack</small></td><td>1 hr 20–1 hr 45</td><td><b>2:15 PM</b></td></tr>
+</tbody></table></div>
+<p class="compact">Times are estimates from town centers. Use the privately shared Airbnb address for final navigation.</p>
+<div class="links">
+<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Fishers%2C+Indiana&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Fishers → Patoka area ↗</a>
+<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Huntington%2C+Indiana&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Huntington → Patoka area ↗</a>
+<a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Louisville%2C+Kentucky&amp;destination=Patoka+Lake+Marina+and+Lodging%2C+Birdseye%2C+Indiana&amp;travelmode=driving">Louisville → Patoka area ↗</a>
+</div></section>
 <section id="routes"><h2>Driving times during the week</h2>
 <p class="lead">Drive estimates, not live traffic. The private apartment location is approximate; allow time to park and take breaks.</p>
-<div class="route-scroll"><table class="route-table"><thead><tr><th>Day / drive</th><th>Drive estimate</th><th>What that means</th></tr></thead><tbody>
+<div class="route-scroll"><table class="route-table legs-table"><thead><tr><th>Day / drive</th><th>Drive estimate</th><th>What that means</th></tr></thead><tbody>
 <tr><td><b>Sun · cabin → Holiday World</b></td><td>50–65 min</td><td>10 AM leave → around 10:50–11:05 ET, then 15–25 min for parking/gates ahead of noon ET opening.</td></tr>
 <tr><td><b>Sun · cabin → French Lick Casino</b></td><td>25–35 min</td><td>Grandparents can leave whenever they're ready.</td></tr>
 <tr><td><b>Mon · cabin → West Baden</b></td><td>30–40 min</td><td>10:30 AM leave → 11:00–11:10 AM arrival. Short walks and seated breaks.</td></tr>
