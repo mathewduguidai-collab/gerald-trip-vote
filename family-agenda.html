@@ -190,7 +190,7 @@ button.addEventListener('click',async function(){
     try{data=await response.json();}catch(e){}
     if(!response.ok||data.saved!==true||!data.receipt_id)throw Error(data.error||'Server did not confirm your save.');
     message((qa?'TEST CONFIRMED — ':'Saved! ')+name+', Gerald received your feedback. Confirmation #'+data.receipt_id+'.');
-    button.textContent=qa?'Test saved':'Saved — submit again to update';
+    button.textContent=qa?'Test saved':'Saved — submit another response';
     requestId=null;
   }catch(error){
     message('NOT SAVED. '+(error.name==='AbortError'?'The request timed out. ':'')+(error.message||'Please try again.')+' Your feedback is still on this page. Try Submit again.',true);
