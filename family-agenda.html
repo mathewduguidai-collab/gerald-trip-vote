@@ -129,24 +129,83 @@ section{margin:22px 0}
 </div>
 <p class="notice"><b>Practical food strategy:</b> Dine out near attractions; use pickup for cabin nights. Delivery is optional.</p>
 </section>
-<section id="feedback" class="feedback"><h2>What would you change?</h2><p>Take a look and tell us what you'd change—activities, dates or food.</p><div class="review-options"><label><input type="checkbox" name="pref" value="I'm good with the plan"> Looks good</label><label><input type="checkbox" name="pref" value="I'm interested in antiquing"> Antiquing</label><label><input type="checkbox" name="pref" value="I'm interested in the safari or hayride"> Safari / hayride</label><label><input type="checkbox" name="pref" value="I like the Falls of the Ohio visit"> Falls of the Ohio</label></div>
-<label for="note"><b>Notes / changes</b></label><textarea id="note" placeholder="Anything else we should work in?"></textarea>
-<div><button class="btn dark" id="copyFeedback">Copy feedback to text the family</button><button class="btn ghost" id="sharePage">Share this page</button></div>
-<p class="compact" id="feedbackStatus" role="status">This page does not store your response; copying lets you send it in the family text.</p>
+<section id="feedback" class="feedback"><h2>What would you change?</h2>
+<p>Take a look and tell us what you'd change—activities, dates or food. Your answers now go directly to Gerald.</p>
+<label for="respondentName"><b>Your name</b></label>
+<input id="respondentName" type="text" maxlength="80" autocomplete="name" placeholder="First name" aria-label="Your name" style="display:block;box-sizing:border-box;width:100%;margin:7px 0 14px;padding:12px;border:1px solid #b3cbc0;border-radius:10px;font:inherit;background:#fff;color:#203a31">
+<div class="review-options">
+<label><input type="checkbox" name="pref" value="I'm good with the plan"> Looks good</label>
+<label><input type="checkbox" name="pref" value="I'm interested in antiquing"> Antiquing</label>
+<label><input type="checkbox" name="pref" value="I'm interested in the safari or hayride"> Safari / hayride</label>
+<label><input type="checkbox" name="pref" value="I like the Falls of the Ohio visit"> Falls of the Ohio</label>
+</div>
+<label for="note"><b>Notes / changes</b></label>
+<textarea id="note" maxlength="2000" placeholder="Anything else we should work in?"></textarea>
+<div><button class="btn dark" id="submitFeedback" type="button">Submit feedback to Gerald</button><button class="btn ghost" id="sharePage" type="button">Share this page</button></div>
+<p class="compact" id="feedbackStatus" role="status" aria-live="polite">Enter your name, select at least one preference or add a note, and press Submit. You will receive a confirmation number after your response is saved.</p>
 </section>
-<p class="foot">Family draft · October 13, 2026 · No prices or private addresses</p>
+<p class="foot">Family draft · October 14, 2026 · No prices or private addresses</p>
 </main>
 <script>
 (function(){
-function $ (id){return document.getElementById(id)}
-$('copyFeedback').addEventListener('click',async function(){
-let chosen=[...document.querySelectorAll('input[name="pref"]:checked')].map(x=>x.value);
-let msg="Family trip feedback (Oct 17–24):\n"+(chosen.length?chosen.join("\n")+"\n":"")+($('note').value.trim()?"Notes: "+$('note').value.trim():"");
-if(!chosen.length&&!$('note').value.trim()){ $('feedbackStatus').textContent="Choose a preference or write a note first.";return;}
-try{await navigator.clipboard.writeText(msg);$('feedbackStatus').textContent="Copied. Paste into our family group text.";}catch(e){$('feedbackStatus').textContent="Select your note and copy it manually."; $('note').focus();$('note').select();}
+const byId=(id)=>document.getElementById(id);
+const endpoint='https://splsniqrunknnwhccrxo.supabase.co/functions/v1/gerald-family-agenda-feedback';
+const params=new URLSearchParams(location.hash.slice(1));
+const token=params.get('family');
+const qa=params.get('qa')==='1';
+const button=byId('submitFeedback'),status=byId('feedbackStatus'),nameField=byId('respondentName'),notes=byId('note');
+let requestId=null;
+function message(text,isError=false){
+  status.textContent=text;
+  status.style.color=isError?'#9b2424':'#20593c';
+  status.style.fontWeight='700';
+}
+if(!token||!/^[A-Za-z0-9_-]{24,96}$/.test(token)){
+ button.disabled=true;
+ message('The agenda is available, but this older link cannot submit feedback. Use the corrected link Gerald sent to the family.',true);
+}
+if(qa)message('QA test mode: submissions from this link are marked test-only and excluded from family counts.');
+document.querySelectorAll('input[name="pref"],#respondentName,#note').forEach(el=>el.addEventListener('input',()=>{requestId=null;}));
+button.addEventListener('click',async function(){
+  const name=nameField.value.trim();
+  const selections=[...document.querySelectorAll('input[name="pref"]:checked')].map(el=>el.value);
+  const note=notes.value.trim();
+  if(!name||name.length>80){message('Enter your name before submitting.',true);nameField.focus();return;}
+  if(!selections.length&&!note){message('Choose a preference or write a note before submitting.',true);return;}
+  if(!token){message('Use the corrected family link to submit.',true);return;}
+  requestId=requestId||crypto.randomUUID();
+  button.disabled=true;
+  button.textContent='Saving feedback…';
+  message('Saving your response to Gerald…');
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({request_id:requestId,name,selections,note,is_test:qa}),
+      signal:controller.signal
+    });
+    let data={};
+    try{data=await response.json();}catch(e){}
+    if(!response.ok||data.saved!==true||!data.receipt_id)throw Error(data.error||'Server did not confirm your save.');
+    message((qa?'TEST CONFIRMED — ':'Saved! ')+name+', Gerald received your feedback. Confirmation #'+data.receipt_id+'.');
+    button.textContent=qa?'Test saved':'Saved — submit again to update';
+    requestId=null;
+  }catch(error){
+    message('NOT SAVED. '+(error.name==='AbortError'?'The request timed out. ':'')+(error.message||'Please try again.')+' Your feedback is still on this page. Try Submit again.',true);
+    button.textContent='Retry submitting feedback';
+  }finally{
+    clearTimeout(timer);
+    button.disabled=false;
+  }
 });
-$('sharePage').addEventListener('click',async function(){
-try{if(navigator.share){await navigator.share({title:"Duguid Family Vacation Plan",url:location.href});return;} await navigator.clipboard.writeText(location.href);$('feedbackStatus').textContent="Page link copied. Paste into the family group text.";}catch(e){$('feedbackStatus').textContent="Use your browser's Share button to send this page."}
+byId('sharePage').addEventListener('click',async function(){
+ try{
+   if(navigator.share){await navigator.share({title:'Duguid Family Vacation Plan',url:location.href});return;}
+   await navigator.clipboard.writeText(location.href);
+   message('Page link copied. Paste into the family group text.');
+ }catch(e){message('Use your browser Share button to send this page.',true);}
 });
 })();
 </script>
